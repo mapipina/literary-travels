@@ -1,15 +1,11 @@
 import React from 'react';
-import logo from './logo.svg';
+import AppContainer from './components/AppContainer'
 import './App.css';
+require('dotenv').config()
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <button>Click here to search books</button>
-      </header>
-    </div>
+    <AppContainer />
   );
 }
 
