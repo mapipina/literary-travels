@@ -1,20 +1,14 @@
 // @flow
 import React from "react";
 
-type Props = {};
-
-type State = {
-  data: Array<Object>
-};
-
 const defaultBookSearch = "fiction books ireland";
 
-class AppContainer extends React.Component<Props, State> {
-  state: State = {
+class AppContainer extends React.Component {
+  state = {
     data: []
   };
 
-  fetchBooksData(): void {
+  fetchBooksData() {
     fetch(
       `https://www.googleapis.com/books/v1/volumes?key=${process.env.REACT_APP_BOOKS_API_KEY}&q=${defaultBookSearch}`
     )
