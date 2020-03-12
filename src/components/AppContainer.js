@@ -1,5 +1,6 @@
 // @flow
 import React from "react";
+import SearchContainer from './SearchContainer';
 
 const defaultBookSearch = "fiction books ireland";
 
@@ -31,6 +32,7 @@ class AppContainer extends React.Component {
         <button onClick={() => this.fetchBooksData()}>
           Click me to get books
         </button>
+        <SearchContainer/>
         <div>
           {data.map(bookItem => {
             return (
