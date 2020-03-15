@@ -1,8 +1,11 @@
 // @flow
 import React from "react";
 import SearchContainer from './SearchContainer';
+import BookCardsContainer from './BookCardsContainer';
 
 const defaultBookSearch = "fiction books ireland";
+// eslint-disable-next-line no-unused-expressions
+'use strict';
 
 class AppContainer extends React.Component {
   state = {
@@ -33,16 +36,7 @@ class AppContainer extends React.Component {
           Click me to get books
         </button>
         <SearchContainer/>
-        <div>
-          {data.map(bookItem => {
-            return (
-              <div key={bookItem.id}>
-                <h2>{bookItem.volumeInfo.title}</h2>
-                <p>{bookItem.volumeInfo.description}</p>
-              </div>
-            );
-          })}
-        </div>
+        <BookCardsContainer bookList={data} />
       </div>
     );
   }

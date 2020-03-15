@@ -1,15 +1,33 @@
 import React from "react";
+import "../styles/Books.css";
+// eslint-disable-next-line no-unused-expressions
+("use strict");
 
 class BookCardsComponent extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-          book: {},
-        };
-      }
 
+  truncateText(text) {
+    const newText = text.length > 250 ? `${text.substring(0, 250)}...` : text;
+    return newText;
+  }
 
-    render() {
-        return;
-    }
+  renderCardContent(title, description) {
+    const shortDesc = this.truncateText(description);
+    return (
+      <>
+      <h1>{title}</h1>
+      <p>{shortDesc}</p>
+      </>
+    )
+  }
+
+  render() {
+    const { title, description } = this.props;
+    return (
+      <div className="card">
+        {this.renderCardContent(title, description)}
+      </div>
+    );
+  }
 }
+
+export default BookCardsComponent;

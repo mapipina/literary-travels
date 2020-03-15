@@ -2,10 +2,6 @@
 import React from "react";
 
 class SearchContainer extends React.Component {
-    constructor(props) {
-        super(props)
-    }
-
     state = {
         genre: '',
         location: '',
