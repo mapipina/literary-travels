@@ -1,6 +1,7 @@
 // @flow
 import React from "react";
-import BookOptions from "../constants";
+import SearchComponent from "./SearchComponent";
+import "../styles/Search.css";
 
 class SearchContainer extends React.Component {
   constructor(props) {
@@ -10,7 +11,7 @@ class SearchContainer extends React.Component {
   state = {
     genre: "",
     location: "",
-    format: ""
+    format: "",
   };
 
   handleDropdownChange(event, type) {
@@ -24,15 +25,19 @@ class SearchContainer extends React.Component {
   }
 
   onSubmit() {
-      const {genre, location, format} = this.state;
-      const {fetchBooksData} = this.props;
-      const bookSearch = `${genre} ${format} ${location}`;
-      fetchBooksData(bookSearch);
+    const { genre, location, format } = this.state;
+    const { fetchBooksData } = this.props;
+    const bookSearch = `${genre} ${format} ${location}`;
+    fetchBooksData(bookSearch);
   }
 
   genDropdown(type, options) {
     const optionArray = options.map((typeOption, i) => {
-      return <option key={`${typeOption}-${i}`} value={typeOption}>{typeOption}</option>;
+      return (
+        <option key={`${typeOption}-${i}`} value={typeOption}>
+          {typeOption}
+        </option>
+      );
     });
     return (
       <select
@@ -58,19 +63,20 @@ class SearchContainer extends React.Component {
         required
         size="15"
         onChange={this.handleInputChange}
-      ></input>
+      />
     );
   }
 
   render() {
+      const bookQuery = this.state;
     return (
-      <div>
-        I want {this.genDropdown("genre", BookOptions.genres)} books about
-        {this.genTopicInput()}
-        in this format {this.genDropdown("format", BookOptions.formats)}
-        <button onClick={() => this.onSubmit()}>
-          Click me to get books
-        </button>
+      <div className="search">
+        <SearchComponent
+          genDropdown={this.genDropdown.bind(this)}
+          genTopicInput={this.genTopicInput.bind(this)}
+          onSubmit={this.onSubmit.bind(this)}
+          bookQuery={bookQuery}
+        />
       </div>
     );
   }

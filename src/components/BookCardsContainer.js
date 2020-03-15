@@ -13,6 +13,8 @@ class BookCardsContainer extends React.Component {
       bookList: []
     };
   }
+  // full look book.volumeInfo.canonicalVolumeLink
+  // image preview: volumeInfo.imageLinks.thumbnail
 
   componentDidMount() {
     const { bookList } = this.props;
@@ -31,18 +33,20 @@ class BookCardsContainer extends React.Component {
   render() {
     const { bookList } = this.state;
     return (
-      <div className='cardContainer'>
-        {bookList.map(book => {
-          const { title, description } = book.volumeInfo;
-          const bookID = book.id;
-          return (
-            <BookCardsComponent
-              key={bookID}
-              title={title}
-              description={description}
-            />
-          );
-        })}
+      <div className="cardContainer">
+        <div className="cardContainer__wrapper">
+          {bookList.map(book => {
+            const { title, description } = book.volumeInfo;
+            const bookID = book.id;
+            return (
+              <BookCardsComponent
+                key={bookID}
+                title={title}
+                description={description}
+              />
+            );
+          })}
+        </div>
       </div>
     );
   }
