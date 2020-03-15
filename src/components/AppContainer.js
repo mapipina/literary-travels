@@ -1,29 +1,26 @@
 // @flow
 import React from "react";
-import SearchContainer from './SearchContainer';
-import BookCardsContainer from './BookCardsContainer';
+import SearchContainer from "./SearchContainer";
+import BookCardsContainer from "./BookCardsContainer";
 
-const defaultBookSearch = "fiction books ireland";
 // eslint-disable-next-line no-unused-expressions
-'use strict';
+("use strict");
 
 class AppContainer extends React.Component {
   state = {
-    data: []
+    data: [],
   };
 
-  fetchBooksData() {
+  fetchBooksData(bookSearch) {
     fetch(
-      `https://www.googleapis.com/books/v1/volumes?key=${process.env.REACT_APP_BOOKS_API_KEY}&q=${defaultBookSearch}`
+      `https://www.googleapis.com/books/v1/volumes?key=${process.env.REACT_APP_BOOKS_API_KEY}&q=${bookSearch}`
     )
       .then(res => {
         return res.json();
       })
       .then(rawData => {
         const data = rawData.items;
-        this.setState({ data }, () => {
-          console.log(data);
-        });
+        this.setState({ data });
       })
       .catch(err => console.log(`An error occurred: ${err}`));
   }
@@ -32,10 +29,7 @@ class AppContainer extends React.Component {
     const { data } = this.state;
     return (
       <div>
-        <button onClick={() => this.fetchBooksData()}>
-          Click me to get books
-        </button>
-        <SearchContainer/>
+        <SearchContainer fetchBooksData={this.fetchBooksData.bind(this)}/>
         <BookCardsContainer bookList={data} />
       </div>
     );

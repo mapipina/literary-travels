@@ -31,7 +31,7 @@ class BookCardsContainer extends React.Component {
   render() {
     const { bookList } = this.state;
     return (
-      <div>
+      <div className='cardContainer'>
         {bookList.map(book => {
           const { title, description } = book.volumeInfo;
           const bookID = book.id;

@@ -11,11 +11,11 @@ class BookCardsComponent extends React.Component {
   }
 
   renderCardContent(title, description) {
-    const shortDesc = this.truncateText(description);
+    const shortDesc = description ? this.truncateText(description) : ''
     return (
       <>
-      <h1>{title}</h1>
-      <p>{shortDesc}</p>
+      <div className='card__title'>{title}</div>
+      <p className='card__desc'>{shortDesc}</p>
       </>
     )
   }
