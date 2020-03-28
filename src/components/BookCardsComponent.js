@@ -1,30 +1,38 @@
 import React from "react";
 import "../styles/Books.css";
-// eslint-disable-next-line no-unused-expressions
-("use strict");
 
 class BookCardsComponent extends React.Component {
-
   truncateText(text) {
-    const newText = text.length > 250 ? `${text.substring(0, 250)}...` : text;
+    const newText = text.length > 150 ? `${text.substring(0, 149)}...` : text;
     return newText;
   }
 
-  renderCardContent(title, description) {
-    const shortDesc = description ? this.truncateText(description) : ''
+  renderCardContent(title, description, image) {
+    const shortDesc = description ? this.truncateText(description) : "";
+    const imageSrc = image.thumbnail;
     return (
       <>
-      <div className='card__title'>{title}</div>
-      <p className='card__desc'>{shortDesc}</p>
+        <div className="card__title">{title}</div>
+        <div className="card__img">
+          <img src={imageSrc} alt={`Bookcover of ${title}`} />
+        </div>
+        <p className="card__desc">{shortDesc}</p>
       </>
-    )
+    );
   }
 
   render() {
-    const { title, description } = this.props;
+    const { title, description, link, image } = this.props;
     return (
       <div className="card">
-        {this.renderCardContent(title, description)}
+        {this.renderCardContent(title, description, image)}
+        <div className="card__footer">
+          <div className="card__link">
+            <a href={link} target="_blank" rel="noopener noreferrer">
+              Read more
+            </a>
+          </div>
+        </div>
       </div>
     );
   }

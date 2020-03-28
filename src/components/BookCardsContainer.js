@@ -22,7 +22,7 @@ class BookCardsContainer extends React.Component {
       this.setState({ bookList });
     }
   }
-
+  // Updating bookList in state when props changes
   componentDidUpdate(prevProps) {
     const { bookList } = this.props;
     if (!_.isEqual(bookList, prevProps.bookList)) {
@@ -36,13 +36,20 @@ class BookCardsContainer extends React.Component {
       <div className="cardContainer">
         <div className="cardContainer__wrapper">
           {bookList.map(book => {
-            const { title, description } = book.volumeInfo;
+            const {
+              title,
+              description,
+              canonicalVolumeLink,
+              imageLinks
+            } = book.volumeInfo;
             const bookID = book.id;
             return (
               <BookCardsComponent
                 key={bookID}
                 title={title}
                 description={description}
+                link={canonicalVolumeLink}
+                image={imageLinks}
               />
             );
           })}

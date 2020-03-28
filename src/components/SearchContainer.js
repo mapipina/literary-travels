@@ -11,7 +11,7 @@ class SearchContainer extends React.Component {
   state = {
     genre: "",
     location: "",
-    format: "",
+    format: ""
   };
 
   handleDropdownChange(event, type) {
@@ -31,6 +31,7 @@ class SearchContainer extends React.Component {
     fetchBooksData(bookSearch);
   }
 
+  // Generalizing the dropdown since there are a couple in the app
   genDropdown(type, options) {
     const optionArray = options.map((typeOption, i) => {
       return (
@@ -47,8 +48,11 @@ class SearchContainer extends React.Component {
         onChange={e => {
           this.handleDropdownChange(e, type);
         }}
+        className="search__dropdown"
       >
-        <option value="">--Please choose an option--</option>
+        <option value="" style={{ textAlign: "center" }}>
+          Select Option
+        </option>
         {optionArray}
       </select>
     );
@@ -63,12 +67,13 @@ class SearchContainer extends React.Component {
         required
         size="15"
         onChange={this.handleInputChange}
+        className="input__text"
       />
     );
   }
 
   render() {
-      const bookQuery = this.state;
+    const bookQuery = this.state;
     return (
       <div className="search">
         <SearchComponent
