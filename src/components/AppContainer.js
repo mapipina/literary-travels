@@ -1,14 +1,12 @@
-// @flow
 import React from "react";
 import SearchContainer from "./SearchContainer";
 import BookCardsContainer from "./BookCardsContainer";
 
-// eslint-disable-next-line no-unused-expressions
-("use strict");
-
 class AppContainer extends React.Component {
   state = {
     data: [],
+    bookReviews: {},
+    errorMsg: ""
   };
 
   fetchBooksData(bookSearch) {
@@ -20,17 +18,43 @@ class AppContainer extends React.Component {
       })
       .then(rawData => {
         const data = rawData.items;
-        this.setState({ data });
+        this.setState({ data }, () => this.genISBNArray());
       })
       .catch(err => console.log(`An error occurred: ${err}`));
   }
 
-  render() {
+  genISBNArray() {
     const { data } = this.state;
+    const isbnArray = [];
+    data.map(book => {
+      const isbn = book.volumeInfo.industryIdentifiers[0].identifier;
+      return isbnArray.push(isbn);
+    });
+    this.fetchBookReviews(isbnArray);
+  }
+
+  fetchBookReviews(isbnArray) {
+    const isbnStr = isbnArray.join();
+    fetch(
+      `https://www.goodreads.com/book/review_counts.json?key=${process.env.REACT_APP_GOODREADS_API_KEY}&isbns=${isbnStr}`,
+      { mode: "no-cors" }
+    )
+      .then(res => {
+        return res.json();
+      })
+      .then(bookReviews => {
+        console.log(bookReviews);
+        this.setState({ bookReviews });
+      })
+      .catch(err => this.setState({ errorMsg: err }));
+  }
+
+  render() {
+    const { data, bookReviews } = this.state;
     return (
       <div>
-        <SearchContainer fetchBooksData={this.fetchBooksData.bind(this)}/>
-        <BookCardsContainer bookList={data} />
+        <SearchContainer fetchBooksData={this.fetchBooksData.bind(this)} />
+        <BookCardsContainer bookList={data} bookReviews={bookReviews} />
       </div>
     );
   }

@@ -12,10 +12,10 @@
 .card {
   background: #fff;
   border-radius: 2px;
-  height: 400px;
+  height: 450px;
   margin: 1rem;
   position: relative;
-  width: 325px;
+  width: 400px;
   box-shadow: 0 3px 6px #999, 0 3px 6px #999;
   text-align: left;
   display: flex;
@@ -30,13 +30,16 @@
 }
 
 .card__desc {
-  padding: 0 1%;
+  padding: 0 4%;
   font-size: 1rem;
-  /* min-height: 20%; */
 }
 
 .card__img {
   padding: 0 25%;
+}
+
+.card__img > img {
+  filter: drop-shadow(0 0 0.75rem darkgray);
 }
 
 .card__footer {

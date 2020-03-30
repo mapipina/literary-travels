@@ -47,7 +47,7 @@ button {
   padding: 0.5rem 1rem;
   margin: 0;
   text-decoration: none;
-  background: #0069ed;
+  background: green;
   color: #ffffff;
   font-family: sans-serif;
   font-size: 1rem;
@@ -61,7 +61,7 @@ button {
 
 button:hover,
 button:focus {
-  background: #0053ba;
+  background: darkgreen;
 }
 
 button:focus {

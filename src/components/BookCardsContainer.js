@@ -3,9 +3,6 @@ import BookCardsComponent from "./BookCardsComponent";
 
 const _ = require("lodash");
 
-// eslint-disable-next-line no-unused-expressions
-("use strict");
-
 class BookCardsContainer extends React.Component {
   constructor(props) {
     super(props);
@@ -13,8 +10,6 @@ class BookCardsContainer extends React.Component {
       bookList: []
     };
   }
-  // full look book.volumeInfo.canonicalVolumeLink
-  // image preview: volumeInfo.imageLinks.thumbnail
 
   componentDidMount() {
     const { bookList } = this.props;
@@ -28,6 +23,7 @@ class BookCardsContainer extends React.Component {
     if (!_.isEqual(bookList, prevProps.bookList)) {
       this.setState({ bookList });
     }
+    console.log(this.props.bookReviews);
   }
 
   render() {
