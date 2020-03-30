@@ -9,6 +9,7 @@ class AppContainer extends React.Component {
     errorMsg: ""
   };
 
+  // Will generalize API calls as utils fn
   fetchBooksData(bookSearch) {
     fetch(
       `https://www.googleapis.com/books/v1/volumes?key=${process.env.REACT_APP_BOOKS_API_KEY}&q=${bookSearch}`
