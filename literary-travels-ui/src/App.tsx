@@ -1,35 +1,58 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { AppShell, Burger, Group, Title, Container, Text } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
+import { SearchBar } from './components/SearchBar';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [opened, { toggle }] = useDisclosure();
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <AppShell
+      header={{ height: 60 }}
+      navbar={{
+        width: 300,
+        breakpoint: 'sm',
+        collapsed: { mobile: !opened, desktop: true },
+      }}
+      padding="md"
+    >
+      <AppShell.Header>
+        <Group h="100%" px="md">
+          <Burger
+            opened={opened}
+            onClick={toggle}
+            hiddenFrom="sm"
+            size="sm"
+          />
+          <Title order={3} c="blue">
+            Literary Travels
+          </Title>
+        </Group>
+      </AppShell.Header>
+      <AppShell.Navbar p="md">
+        <Text>Saved Trips</Text>
+        <Text>My Map</Text>
+      </AppShell.Navbar>
+
+      <AppShell.Main>
+        <Container size="md" pt="xl">
+          <Text size="xl" fw={700} ta="center" mb="lg">
+            Where are you traveling next?
+          </Text>
+          <Text ta="center" c="dimmed" mb="xl">
+            Get excited for your upcoming trip by reading a book set in your travel destination!
+          </Text>
+
+          <SearchBar
+            onSubmit={(query) => {
+              console.log("Time to fetch data for:", query);
+              // will replace w api call later, placeholder for now
+            }}
+          />
+
+        </Container>
+      </AppShell.Main>
+    </AppShell>
+  );
 }
 
-export default App
+export default App;
