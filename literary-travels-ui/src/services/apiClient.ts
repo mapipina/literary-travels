@@ -5,6 +5,8 @@ export interface Book {
     author: string;
     location: string;
     coordinates?: { lat: number; lng: number };
+    genre?: string;
+    publicationYear?: number;
 }
 export const searchBooks = async (location: string): Promise<[]> => {
     try {

@@ -33,7 +33,7 @@ const parseCoordinates = (pointString?: string): { lat: number, lng: number } | 
 
 export const getWikiData = async (location: string): Promise<WikidataRawResponse> => {
     const sparqlQuery = `
-        SELECT ?bookLabel ?authorLabel ?locationLabel ?coordinates WHERE {
+        SELECT ?bookLabel ?authorLabel ?locationLabel ?coordinates ?genreLabel ?pubDate WHERE {
         ?book wdt:P31/wdt:P279* wd:Q7725634. # instance of literary work
         ?book wdt:P840 ?location.            # narrative location
         ?location wdt:P625 ?coordinates.     # coordinate location, will come necessary for map pinning and visualization
@@ -43,7 +43,9 @@ export const getWikiData = async (location: string): Promise<WikidataRawResponse
         FILTER(LANG(?locName) = "en")
         FILTER(CONTAINS(LCASE(?locName), LCASE("${location}")))
 
-        OPTIONAL { ?book wdt:P50 ?author. }  
+        OPTIONAL { ?book wdt:P50 ?author. } 
+        OPTIONAL { ?book wdt:P136 ?genre. }
+        OPTIONAL { ?book wdt:P577 ?pubDate. }
         
         SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
         }
@@ -67,7 +69,9 @@ export const getBooksByLocation = async (location: string): Promise<WikiDataDTO[
             title: binding.bookLabel?.value,
             author: binding.authorLabel?.value || 'Unknown',
             location: binding.locationLabel?.value,
-            coordinates: parseCoordinates(binding.coordinates?.value)
+            coordinates: parseCoordinates(binding.coordinates?.value),
+            genre: binding.genreLabel?.value,
+            publicationYear: binding.pubDate?.value?.substring(0, 4)
         }));
     } catch (error) {
         console.error(`Error fetching books by location ${location}: ${error}`);
