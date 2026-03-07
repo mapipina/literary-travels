@@ -18,6 +18,19 @@ export interface WikidataRawResponse {
 
 const reqURL = 'https://query.wikidata.org/sparql';
 
+const parseCoordinates = (pointString?: string): { lat: number, lng: number } | undefined => {
+    if (!pointString) return undefined;
+    
+    const match = pointString.match(/Point\(([^ ]+) ([^ ]+)\)/);
+    if (match) {
+        return {
+            lng: parseFloat(match[1]!),
+            lat: parseFloat(match[2]!)
+        };
+    }
+    return undefined;
+};
+
 export const getWikiData = async (location: string): Promise<WikidataRawResponse> => {
     const sparqlQuery = `
         SELECT ?bookLabel ?authorLabel ?locationLabel ?coordinates WHERE {
@@ -40,7 +53,7 @@ export const getWikiData = async (location: string): Promise<WikidataRawResponse
         params: { query: sparqlQuery },
         headers: {
             'Accept': 'application/sparql-results+json',
-            'User-Agent': 'LiteraryTravelsApp/1.0 mpina09@gmail.com'
+            'User-Agent': `LiteraryTravelsApp/1.0 (${process.env.WIKIDATA_EMAIL})`
         }
     });
 
@@ -54,7 +67,7 @@ export const getBooksByLocation = async (location: string): Promise<WikiDataDTO[
             title: binding.bookLabel?.value,
             author: binding.authorLabel?.value || 'Unknown',
             location: binding.locationLabel?.value,
-            coordinates: binding.coordinates?.value
+            coordinates: parseCoordinates(binding.coordinates?.value)
         }));
     } catch (error) {
         console.error(`Error fetching books by location ${location}: ${error}`);
