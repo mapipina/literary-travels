@@ -1,9 +1,23 @@
 import { AppShell, Burger, Group, Title, Container, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { SearchBar } from './components/SearchBar';
+import { useState } from 'react';
+import { searchBooks, type Book } from './services/apiClient';
 
 function App() {
   const [opened, { toggle }] = useDisclosure();
+  const [books, setBooks] = useState<Book[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  const handleSearch = async (location: string) => {
+    setIsLoading(true);
+    setHasSearched(true);
+
+    const results = await searchBooks(location);
+    setBooks(results);
+    setIsLoading(false);
+  }
 
   return (
     <AppShell
@@ -43,11 +57,15 @@ function App() {
           </Text>
 
           <SearchBar
-            onSubmit={(query) => {
-              console.log("Time to fetch data for:", query);
-              // will replace w api call later, placeholder for now
-            }}
+            onSubmit={handleSearch}
+            isLoading={isLoading}
           />
+          {/* Temporary data dump */}
+          {hasSearched && !isLoading && (
+            <pre style={{ marginTop: '2rem', padding: '1rem', background: '#f8f9fa', borderRadius: '8px', overflowX: 'auto' }}>
+              {JSON.stringify(books, null, 2)}
+            </pre>
+          )}
 
         </Container>
       </AppShell.Main>

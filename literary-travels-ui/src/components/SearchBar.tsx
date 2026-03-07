@@ -7,9 +7,10 @@ const FORMATS = ['Paperback', 'E-book', 'Audiobook'];
 
 interface SearchBarProps {
   onSubmit: (searchQuery: string) => void;
+  isLoading: boolean;
 }
 
-export function SearchBar({ onSubmit }: SearchBarProps) {
+export function SearchBar({ onSubmit, isLoading }: SearchBarProps) {
   const [genre, setGenre] = useState<string | null>(null);
   const [location, setLocation] = useState('');
   const [format, setFormat] = useState<string | null>(null);
@@ -17,8 +18,11 @@ export function SearchBar({ onSubmit }: SearchBarProps) {
   const isBtnDisabled = !genre || !location.trim() || !format;
 
   const handleSubmit = () => {
+    // if (!isBtnDisabled) {
+    //   onSubmit(`${genre} ${format} ${location}`); // TODO: Update once the app supports more query fields
+    // }
     if (!isBtnDisabled) {
-      onSubmit(`${genre} ${format} ${location}`);
+      onSubmit(location.trim());
     }
   };
 
@@ -50,11 +54,11 @@ export function SearchBar({ onSubmit }: SearchBarProps) {
         />
       </Group>
       <Group justify="center" mt="xl">
-        <Button 
-          onClick={handleSubmit} 
+        <Button
+          onClick={handleSubmit}
           disabled={isBtnDisabled}
-          size="md"
-        >
+          loading={isLoading}
+          size="md">
           Books, yay!
         </Button>
       </Group>
