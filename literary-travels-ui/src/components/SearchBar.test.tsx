@@ -1,4 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import { MantineProvider } from '@mantine/core';
 import { SearchBar } from './SearchBar';
@@ -9,30 +10,46 @@ describe('SearchBar Component', () => {
   };
 
   it('disables the submit button on initial render', () => {
-    renderWithMantine(<SearchBar onSubmit={vi.fn()} />);
+    renderWithMantine(<SearchBar onSubmit={vi.fn()} isLoading={false} />);
     
     const button = screen.getByRole('button', { name: /Books, yay!/i });
     expect(button).toBeDisabled();
   });
 
-  it('enables the button when inputs are filled and calls onSubmit', () => {
+  it('enables the button when inputs are filled and calls onSubmit', async () => {
+    const user = userEvent.setup(); 
     const mockSubmit = vi.fn();
-    renderWithMantine(<SearchBar onSubmit={mockSubmit} />);
     
-    // The button starts disabled
+    renderWithMantine(<SearchBar onSubmit={mockSubmit} isLoading={false} />);
+    
     const button = screen.getByRole('button', { name: /Books, yay!/i });
     expect(button).toBeDisabled();
 
-    // 1. Fill the location text input
     const locationInput = screen.getByPlaceholderText('e.g., London, Paris...');
-    fireEvent.change(locationInput, { target: { value: 'Tokyo' } });
+    await user.type(locationInput, 'Tokyo');
 
-    // Note: To fully enable the button, the Select components for Genre and Format 
-    // also need to be filled. In a full integration test, you'd simulate clicking 
-    // the Mantine Select portals here. For this unit test scope, if we were to fill 
-    // all three, we would expect the button to be enabled:
-    // expect(button).not.toBeDisabled();
-    // fireEvent.click(button);
-    // expect(mockSubmit).toHaveBeenCalledWith('Mystery Paperback Tokyo');
+    const genreInput = screen.getByPlaceholderText('Select genre');
+    await user.click(genreInput);
+    const mysteryOption = await screen.findByText('Mystery');
+    // const mysteryOption = await screen.findByRole('option', { name: 'Mystery' });
+    await user.click(mysteryOption);
+
+    const formatInput = screen.getByPlaceholderText('Select format');
+    await user.click(formatInput);
+    const paperbackOption = await screen.findByText('Paperback');
+    // const paperbackOption = await screen.findByRole('option', { name: 'Paperback' });
+    await user.click(paperbackOption);
+
+    expect(button).not.toBeDisabled();
+    await user.click(button);
+
+    expect(mockSubmit).toHaveBeenCalledWith('Tokyo');
+  });
+
+  it('disables the submit button when isLoading is true', () => {
+    renderWithMantine(<SearchBar onSubmit={vi.fn()} isLoading={true} />);
+    
+    const button = screen.getByRole('button', { name: /Books, yay!/i });
+    expect(button).toBeDisabled();
   });
 });
