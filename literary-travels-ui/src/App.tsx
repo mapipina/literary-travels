@@ -3,6 +3,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { SearchBar } from './components/SearchBar';
 import { useState } from 'react';
 import { searchBooks, type Book } from './services/apiClient';
+import { BookGrid } from './components/BookGrid';
 
 function App() {
   const [opened, { toggle }] = useDisclosure();
@@ -61,10 +62,13 @@ function App() {
             isLoading={isLoading}
           />
           {/* Temporary data dump */}
-          {hasSearched && !isLoading && (
+          {/* {hasSearched && !isLoading && (
             <pre style={{ marginTop: '2rem', padding: '1rem', background: '#f8f9fa', borderRadius: '8px', overflowX: 'auto' }}>
               {JSON.stringify(books, null, 2)}
             </pre>
+          )} */}
+          {hasSearched && !isLoading && (
+            <BookGrid books={books} />
           )}
 
         </Container>
