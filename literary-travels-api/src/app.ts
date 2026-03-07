@@ -20,7 +20,8 @@ app.get('/api/search', async (req: Request, res: Response) => {
     }
   
     const books = await getBooksByLocation(location);
-    return res.status(200).json({ message: `Found matched books for ${location}`, data: [...books] });
+    const successMsg = books.length > 0 ? `Found matched books for ${location}` : `No books found based in ${location}`;
+    return res.status(200).json({ message: successMsg, data: books });
   } catch (e) {
     console.error(`Error occurred retrieving data from Wikidata: ${e}`);
     return res.status(500).json({ error: 'Failed to retrieve data from Wikidata' });
