@@ -36,8 +36,8 @@ describe('WikidataService - getBooksByLocation', () => {
             author: 'Robert Thorogood',
             location: 'Marlow',
             coordinates: { lat: 51.57, lng: -0.77 },
-            genre: 'Cozy Mystery',
-            publicationYear: '2021'
+            genres: ['Cozy Mystery'],
+            publicationYear: 2021
         });
     });
 
@@ -64,9 +64,46 @@ describe('WikidataService - getBooksByLocation', () => {
             author: 'Unknown',
             location: 'London',
             coordinates: undefined,
-            genre: undefined,
-            publicationYear: undefined
+            genres: [],
+            publicationYear: null
         });
+    });
+
+    // Updated: Added new test block to verify the deduplication and genre merging logic
+    it('deduplicates books and merges multiple genres into an array', async () => {
+        const mockRawData = {
+            head: { vars: [] },
+            results: {
+                bindings: [
+                    {
+                        bookLabel: { type: 'literal', value: 'The Lady in the Lake' },
+                        authorLabel: { type: 'literal', value: 'Raymond Chandler' },
+                        locationLabel: { type: 'literal', value: 'Los Angeles' },
+                        genreLabel: { type: 'literal', value: 'detective fiction' }
+                    },
+                    {
+                        bookLabel: { type: 'literal', value: 'The Lady in the Lake' },
+                        authorLabel: { type: 'literal', value: 'Raymond Chandler' },
+                        locationLabel: { type: 'literal', value: 'Los Angeles' },
+                        genreLabel: { type: 'literal', value: 'noir fiction' }
+                    }
+                ]
+            }
+        };
+
+        vi.mocked(axios.get).mockResolvedValueOnce({ data: mockRawData });
+
+        const result = await getBooksByLocation('Los Angeles');
+
+        expect(result).toHaveLength(1); 
+        expect(result).toEqual([{
+            title: 'The Lady in the Lake',
+            author: 'Raymond Chandler',
+            location: 'Los Angeles',
+            coordinates: undefined,
+            genres: ['detective fiction', 'noir fiction'],
+            publicationYear: null
+        }]);
     });
 
     it('throws an error if the Axios request fails', async () => {

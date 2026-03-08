@@ -4,6 +4,7 @@ import { SearchBar } from './components/SearchBar';
 import { useState } from 'react';
 import { searchBooks, type Book } from './services/apiClient';
 import { BookGrid } from './components/BookGrid';
+import { MapWrapper } from './components/MapWrapper';
 
 function App() {
   const [opened, { toggle }] = useDisclosure();
@@ -67,6 +68,7 @@ function App() {
               {JSON.stringify(books, null, 2)}
             </pre>
           )} */}
+          <MapWrapper books={books} />
           {hasSearched && !isLoading && (
             <BookGrid books={books} />
           )}

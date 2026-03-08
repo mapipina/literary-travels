@@ -20,7 +20,7 @@ const reqURL = 'https://query.wikidata.org/sparql';
 
 const parseCoordinates = (pointString?: string): { lat: number, lng: number } | undefined => {
     if (!pointString) return undefined;
-    
+
     const match = pointString.match(/Point\(([^ ]+) ([^ ]+)\)/);
     if (match) {
         return {
@@ -65,14 +65,42 @@ export const getWikiData = async (location: string): Promise<WikidataRawResponse
 export const getBooksByLocation = async (location: string): Promise<WikiDataDTO[]> => {
     try {
         const data = await getWikiData(location);
-        return data.results.bindings.map(binding => ({
+        const mappedBooks = data.results.bindings.map((binding: any) => ({
             title: binding.bookLabel?.value,
             author: binding.authorLabel?.value || 'Unknown',
             location: binding.locationLabel?.value,
             coordinates: parseCoordinates(binding.coordinates?.value),
             genre: binding.genreLabel?.value,
-            publicationYear: binding.pubDate?.value?.substring(0, 4)
+            publicationYear: binding.pubDate?.value ? parseInt(binding.pubDate.value, 10) : null,
         }));
+
+        // Discovered that WikiData will send back a separate entry for each genre a book is classified as
+        // so deduping the books and grouping the genres 
+        return mappedBooks.reduce((acc: WikiDataDTO[], curr) => {
+            const existingBook = acc.find(book =>
+                book.title === curr.title && book.author === curr.author
+            );
+
+            if (existingBook) {
+                if (curr.genre) {
+                    if (!existingBook.genres) {
+                        existingBook.genres = [];
+                    }
+                    if (!existingBook.genres.includes(curr.genre)) {
+                        existingBook.genres.push(curr.genre);
+                    }
+                }
+            } else {
+                const { genre, ...restOfBook } = curr;
+                
+                acc.push({
+                    ...restOfBook,
+                    genres: genre ? [genre] : []
+                });
+            }
+
+            return acc;
+        }, []);
     } catch (error) {
         console.error(`Error fetching books by location ${location}: ${error}`);
         throw error;
