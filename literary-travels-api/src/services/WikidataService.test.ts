@@ -37,7 +37,7 @@ describe('WikidataService - getBooksByLocation', () => {
             location: 'Marlow',
             coordinates: { lat: 51.57, lng: -0.77 },
             genres: ['Cozy Mystery'],
-            publicationYear: '2021'
+            publicationYear: 2021
         });
     });
 
@@ -65,7 +65,7 @@ describe('WikidataService - getBooksByLocation', () => {
             location: 'London',
             coordinates: undefined,
             genres: [],
-            publicationYear: undefined
+            publicationYear: null
         });
     });
 
@@ -102,7 +102,7 @@ describe('WikidataService - getBooksByLocation', () => {
             location: 'Los Angeles',
             coordinates: undefined,
             genres: ['detective fiction', 'noir fiction'],
-            publicationYear: undefined
+            publicationYear: null
         }]);
     });
 
