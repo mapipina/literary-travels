@@ -1,14 +1,7 @@
 import axios from "axios";
+import type Book from "../types/Book";
 
-export interface Book {
-    title: string;
-    author: string;
-    location: string;
-    coordinates?: { lat: number; lng: number };
-    genre?: string;
-    publicationYear?: number;
-}
-export const searchBooks = async (location: string): Promise<[]> => {
+export const searchBooks = async (location: string): Promise<Book[]> => {
     try {
         const res = await axios.get('http://localhost:3000/api/search', {
             params: {

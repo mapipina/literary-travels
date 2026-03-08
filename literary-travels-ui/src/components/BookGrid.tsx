@@ -1,4 +1,4 @@
-import type { Book } from "../services/apiClient";
+import type Book from "../types/Book";
 import { Badge, Card, Group, SimpleGrid, Text } from '@mantine/core';
 
 export interface BookGridProps {
@@ -38,7 +38,11 @@ export const BookGrid: React.FC<BookGridProps> = ({ books }) => {
                     </Text>
                     <Group mt="md" gap="xs">
                         {book.publicationYear && <Badge variant="light" color="gray">{book.publicationYear}</Badge>}
-                        {book.genre && <Badge variant="light" color="violet">{book.genre}</Badge>}
+                        {book.genres.map((genre) => (
+                            <Badge key={genre} variant="light" color="violet">
+                                {genre}
+                            </Badge>
+                        ))}
                     </Group>
                 </Card>
             ))}

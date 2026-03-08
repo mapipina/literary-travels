@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { MantineProvider } from '@mantine/core';
 import { BookGrid } from './BookGrid';
-import type { Book } from '../services/apiClient';
+import type Book from '../types/Book';
 
 describe('BookGrid Component', () => {
     const renderWithMantine = (component: React.ReactNode) => {
@@ -22,11 +22,13 @@ describe('BookGrid Component', () => {
                 title: 'The Marlow Murder Club',
                 author: 'Robert Thorogood',
                 location: 'Marlow',
+                genres: []
             },
             {
                 title: 'Shakespeare and Hathaway',
                 author: 'Jude Tindall',
                 location: 'Stratford-upon-Avon',
+                genres: []
             }
         ];
 
@@ -45,12 +47,13 @@ describe('BookGrid Component', () => {
                 author: 'Robert Thorogood',
                 location: 'Marlow',
                 publicationYear: 2021,
-                genre: 'Cozy Mystery'
+                genres: ['Cozy Mystery']
             },
             {
                 title: 'Shakespeare and Hathaway',
                 author: 'Jude Tindall',
                 location: 'Stratford-upon-Avon',
+                genres: []
             }
         ];
 
