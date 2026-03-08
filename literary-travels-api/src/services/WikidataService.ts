@@ -71,7 +71,7 @@ export const getBooksByLocation = async (location: string): Promise<WikiDataDTO[
             location: binding.locationLabel?.value,
             coordinates: parseCoordinates(binding.coordinates?.value),
             genre: binding.genreLabel?.value,
-            publicationYear: binding.pubDate?.value?.substring(0, 4)
+            publicationYear: binding.pubDate?.value ? parseInt(binding.pubDate.value, 10) : null,
         }));
 
         // Discovered that WikiData will send back a separate entry for each genre a book is classified as

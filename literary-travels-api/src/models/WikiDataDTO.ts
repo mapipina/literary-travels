@@ -3,6 +3,6 @@ export interface WikiDataDTO {
     author: string | undefined;
     location: string | undefined;
     coordinates: {lat: number, lng: number} | undefined; 
-    genres?: string[];
-    publicationYear?: string | undefined;
+    genres: string[];
+    publicationYear: number | null;
 }
