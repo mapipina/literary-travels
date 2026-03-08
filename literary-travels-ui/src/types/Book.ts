@@ -4,5 +4,5 @@ export default interface Book {
     location: string;
     coordinates?: { lat: number; lng: number };
     genres: string[];
-    publicationYear?: number;
+    publicationYear: number | null;
 }
