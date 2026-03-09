@@ -1,18 +1,12 @@
 import { Sequelize } from 'sequelize';
-import dotenv from 'dotenv';
-
-dotenv.config();
+const allConfigs = require('./config.js');
+const env = process.env.NODE_ENV || 'development';
+const config = allConfigs[env] || allConfigs['development'];
 
 const sequelize = new Sequelize(
-  process.env.DATABASE_URL || 'postgres://localhost:5432/literary_travels', 
-  {
-    dialect: 'postgres',
-    logging: false,
-    define: {
-      underscored: true,
-      timestamps: true,
-    },
-  }
+  // Priority: Pooled Env > Config URL > Local Fallback
+  process.env.DATABASE_URL_POOLED || config.url || 'postgres://localhost:5432/literary_travels', 
+  config
 );
 
 export default sequelize;

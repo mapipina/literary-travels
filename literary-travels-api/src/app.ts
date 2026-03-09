@@ -2,14 +2,29 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { getBooksByLocation } from './services/WikidataService';
 import SavedBook from './models/SavedBook';
-import { error } from 'node:console';
+import sequelize from './config/database';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get('/api/health', (_req: Request, res: Response) => {
-  res.status(200).json({ status: 'ok', message: 'Literary Travels API is running.' });
+app.get('/api/health', async (_req: Request, res: Response) => {
+  try {
+    await sequelize.authenticate();
+    
+    res.status(200).json({ 
+      status: 'ok', 
+      database: 'connected',
+      message: 'Literary Travels API and Neon DB are healthy.' 
+    });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(500).json({ 
+      status: 'error', 
+      database: 'disconnected',
+      message: 'API is up, but the database is unreachable.' 
+    });
+  }
 });
 
 app.get('/api/search', async (req: Request, res: Response) => {
