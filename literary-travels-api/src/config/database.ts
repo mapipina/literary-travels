@@ -1,18 +1,10 @@
 import { Sequelize } from 'sequelize';
-import dotenv from 'dotenv';
-
-dotenv.config();
+const config = require('./config.js')[process.env.NODE_ENV || 'development'];
 
 const sequelize = new Sequelize(
-  process.env.DATABASE_URL || 'postgres://localhost:5432/literary_travels', 
-  {
-    dialect: 'postgres',
-    logging: false,
-    define: {
-      underscored: true,
-      timestamps: true,
-    },
-  }
+  // Use Pooled for app traffic, fallback to Direct if Pooled isn't set
+  process.env.DATABASE_URL_POOLED || config.url, 
+  config
 );
 
 export default sequelize;
