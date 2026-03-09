@@ -6,3 +6,8 @@ export default interface Book {
     genres: string[];
     publicationYear: number | null;
 }
+
+export type SavedBook = Omit<Book, 'coordinates'> & {
+    coordinates: { lat: number; lng: number };
+    publicationYear: number;
+}

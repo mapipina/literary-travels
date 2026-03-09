@@ -2,9 +2,11 @@ import { AppShell, Burger, Group, Title, Container, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { SearchBar } from './components/SearchBar';
 import { useState } from 'react';
-import { searchBooks, type Book } from './services/apiClient';
+import { searchBooks } from './services/apiClient';
+import type Book from './types/Book'
 import { BookGrid } from './components/BookGrid';
 import { MapWrapper } from './components/MapWrapper';
+import { MOCK_BOOKS } from './mocks/mockedBooks';
 
 function App() {
   const [opened, { toggle }] = useDisclosure();
@@ -70,7 +72,8 @@ function App() {
           )} */}
           <MapWrapper books={books} />
           {hasSearched && !isLoading && (
-            <BookGrid books={books} />
+            <BookGrid books={MOCK_BOOKS} />
+            // <BookGrid books={books} />
           )}
 
         </Container>
