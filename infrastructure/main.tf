@@ -1,8 +1,8 @@
 terraform {
     required_providers {
         neon = {
-            source  = "neondatabase/json"
-            version = "~>0.4.0"
+            source  = "kislerdm/neon"
+            version = "0.13.0"
         }
     }
 }
@@ -13,23 +13,32 @@ provider "neon" {
 
 resource "neon_project" "literary_travels" {
     name                      = "literary-travels-prod"
-    history_retention_seconds = 86400
+    history_retention_seconds = 21600
 }
 
-resource "neon_branch" "main" {
-    project_id = "neon_project.literary_travels.id"
-    name       = "main"
-}
-
-resouce "neon_endpoint" "primary_compute" {
+data "neon_branches" "all" {
     project_id = neon_project.literary_travels.id
-    branch_id  = neon_branch.main.id
+}
+
+data "neon_branch_endpoints" "all" {
+    project_id = neon_project.literary_travels.id
+    branch_id = [for b in data.neon_branches.all.branches : b.id if b.name == "main"][0]
+}
+
+resource "neon_role" "db_admin" {
+    project_id = neon_project.literary_travels.id
+    branch_id  = [for b in data.neon_branches.all.branches : b.id if b.name == "main"][0]
+    name       = "lt_db_user"
+}
+
+resource "neon_database" "api_db" {
+    project_id = neon_project.literary_travels.id
+    branch_id  = [for b in data.neon_branches.all.branches : b.id if b.name == "main"][0]
     name       = "literary_travels"
     owner_name = neon_role.db_admin.name
 }
 
-resource neon_role "db_admin" {
-    project_id = neon_project.literary_travels.id
-    branch_id  = neon_branch.main.id
-    name       = "lt_db_user"
+locals {
+  db_host   = data.neon_branch_endpoints.all.endpoints[0].host
+  branch_id = [for b in data.neon_branches.all.branches : b.id if b.name == "main"][0]
 }
