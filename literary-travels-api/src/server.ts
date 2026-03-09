@@ -1,10 +1,15 @@
+import 'dotenv/config';
 import app from './app';
-import dotenv from 'dotenv';
-
-dotenv.config();
+import sequelize from './config/database';
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+sequelize.sync({ alter: true })
+  .then(() => {
+    console.info('Db is synced'); 
+    app.listen(PORT, () => {
+      console.log(`Server is running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => console.error(`Error occurred syncing db: ${err}`));
+
