@@ -13,5 +13,11 @@ const dbConfig = {
 
 module.exports = {
   development: dbConfig,
-  production: dbConfig
+  production: dbConfig,
+  // This prevents "undefined" error from popping up in the backend tests
+  test: {
+    url: process.env.DATABASE_URL_TEST || 'postgres://localhost:5432/literary_travels_test',
+    dialect: 'postgres',
+    logging: false
+  }
 };

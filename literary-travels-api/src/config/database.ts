@@ -1,9 +1,11 @@
 import { Sequelize } from 'sequelize';
-const config = require('./config.js')[process.env.NODE_ENV || 'development'];
+const allConfigs = require('./config.js');
+const env = process.env.NODE_ENV || 'development';
+const config = allConfigs[env] || allConfigs['development'];
 
 const sequelize = new Sequelize(
-  // Use Pooled for app traffic, fallback to Direct if Pooled isn't set
-  process.env.DATABASE_URL_POOLED || config.url, 
+  // Priority: Pooled Env > Config URL > Local Fallback
+  process.env.DATABASE_URL_POOLED || config.url || 'postgres://localhost:5432/literary_travels', 
   config
 );
 

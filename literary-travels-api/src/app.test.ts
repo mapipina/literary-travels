@@ -3,25 +3,43 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import app from './app'; 
 import { getBooksByLocation } from './services/WikidataService';
 
+vi.mock('./config/database', () => {
+  return {
+    default: {
+      authenticate: vi.fn().mockResolvedValue(undefined),
+      define: vi.fn(),
+      sync: vi.fn().mockResolvedValue(undefined),
+    },
+  };
+});
+
+vi.mock('./models/SavedBook', () => {
+  return {
+    default: {
+      findOne: vi.fn(),
+      create: vi.fn(),
+      init: vi.fn(),
+    }
+  };
+});
 vi.mock('./services/WikidataService');
 const mockedGetBooks = vi.mocked(getBooksByLocation);
 
 describe('API Routes', () => {
   
-  // Your original health check block
   describe('GET /api/health', () => {
-    it('returns a 200 OK status and correct message', async () => {
+    it('returns a 200 OK status and correct message with db heartbeat', async () => {
       const response = await request(app).get('/api/health');
       
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
         status: 'ok',
-        message: 'Literary Travels API is running.'
+        database: 'connected',
+        message: 'Literary Travels API and Neon DB are healthy.'
       });
     });
   });
 
-  // The new search endpoint block
   describe('GET /api/search', () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -37,8 +55,12 @@ describe('API Routes', () => {
     it('returns 200 and a success message when books are found', async () => {
         mockedGetBooks.mockResolvedValueOnce([
             {
-              title: 'Mock Book', author: 'Mock Author', location: 'Paris',
-              coordinates: undefined
+              title: 'Mock Book', 
+              author: 'Mock Author', 
+              location: 'Paris',
+              coordinates: { lat: 48.8566, lng: 2.3522 },
+              genres: ['Fiction'],
+              publicationYear: 2020
             }
         ]);
 
@@ -50,7 +72,7 @@ describe('API Routes', () => {
     });
 
     it('returns 200 and an empty message when no books are found', async () => {
-        mockedGetBooks.mockResolvedValueOnce([]); // Empty array
+        mockedGetBooks.mockResolvedValueOnce([]);
 
         const response = await request(app).get('/api/search?query=Atlantis');
         
@@ -68,5 +90,4 @@ describe('API Routes', () => {
         expect(response.body).toEqual({ error: 'Failed to retrieve data from Wikidata' });
     });
   });
-
 });
