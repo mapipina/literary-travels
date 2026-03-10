@@ -114,11 +114,24 @@ app.post('/api/books', async (req: Request, res: Response) => {
 
 app.get('/api/books', async (_req: Request, res: Response) => {
   try {
-    // assuming the user for this app is a single user + use case so no need to look up books by tripId or userId
-    const savedBooks = await SavedBook.findAll();
+    const savedBooks = await SavedBook.findAll({
+      order: [['createdAt', 'DESC']]
+    });
+
+    const formattedBooks = savedBooks.map(book => {
+      const data = book.get({ plain: true });
+      return {
+        ...data,
+        coordinates: {
+          lat: data.lat,
+          lng: data.lng
+        }
+      };
+    });
+
     return res.status(200).json({
-      message: savedBooks.length > 0 ? 'Found these associated books' : 'No books saved yet',
-      data: savedBooks
+      message: formattedBooks.length > 0 ? 'Found these associated books' : 'No books saved yet',
+      data: formattedBooks
     });
   } catch (e) {
     console.log(`Error occurred retrieving books: ${e}`);
