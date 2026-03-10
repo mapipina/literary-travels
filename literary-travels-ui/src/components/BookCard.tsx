@@ -13,7 +13,12 @@ const shakeAnimation = `
   }
 `;
 
-export const BookCard: React.FC<{ book: Book }> = ({ book }) => {
+interface BookCardProps {
+    book: Book;
+    showSaveButton?: boolean;
+}
+
+export const BookCard: React.FC<BookCardProps> = ({ book, showSaveButton }) => {
     const [status, setStatus] = useState<'idle' | 'loading' | 'saved' | 'error'>('idle');
 
     useEffect(() => {
@@ -75,7 +80,7 @@ export const BookCard: React.FC<{ book: Book }> = ({ book }) => {
                         ))}
                     </Group>
                 </Box>
-
+                {showSaveButton &&
                 <Button
                     fullWidth
                     mt="md"
@@ -93,7 +98,8 @@ export const BookCard: React.FC<{ book: Book }> = ({ book }) => {
                     {status === 'loading' && 'Saving...'}
                     {status === 'saved' && '✓ Book has been saved'}
                     {status === 'error' && 'Failed to save - Try Again?'}
-                </Button>
+                </Button>}
+                
             </Card>
         </>
     );
