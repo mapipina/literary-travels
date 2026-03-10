@@ -41,3 +41,5 @@ export const getAllSavedBooks = async (): Promise<Book[]> => {
     return [];
   }
 }
+
+export const fetcher = (url: string) => axios.get(url).then(res => res.data.data);
