@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-// import { saveBook } from "../services/apiClient"; 
-import type { default as Book } from "../types/Book";
+import type { default as Book, SavedBook } from "../types/Book";
 import { Badge, Button, Card, Group, Text, Box, Stack } from "@mantine/core";
+import { useSWRConfig } from "swr";
+import { saveBook } from "../services/apiClient";
 
 const shakeAnimation = `
   @keyframes shake {
@@ -19,6 +20,7 @@ interface BookCardProps {
 }
 
 export const BookCard: React.FC<BookCardProps> = ({ book, showSaveButton }) => {
+const { mutate } = useSWRConfig(); 
     const [status, setStatus] = useState<'idle' | 'loading' | 'saved' | 'error'>('idle');
 
     useEffect(() => {
@@ -32,15 +34,20 @@ export const BookCard: React.FC<BookCardProps> = ({ book, showSaveButton }) => {
         if (!book.coordinates || book.publicationYear === null) return;
         setStatus('loading');
 
-        // Mock Logic
-        setTimeout(() => {
-            const simulateError = false; 
-            if (simulateError) {
-                setStatus('error');
-            } else {
-                setStatus('saved');
-            }
-        }, 1200);
+        try {
+            const payload: SavedBook = {
+                ...book,
+                coordinates: book.coordinates,
+                publicationYear: book.publicationYear
+            };
+            await saveBook(payload);
+            setStatus('saved');
+            mutate('/api/books'); 
+            
+        } catch (error) {
+            console.error(error);
+            setStatus('error');
+        }
     };
 
     return (

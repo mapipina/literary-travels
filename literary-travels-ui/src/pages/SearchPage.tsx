@@ -1,23 +1,20 @@
 import { useState } from 'react';
+import useSWR from 'swr';
 import { Container, Text, Title, Box, Paper, Stack, rem } from '@mantine/core';
 import { SearchBar } from '../components/SearchBar';
 import { BookGrid } from '../components/BookGrid';
 import { MapWrapper } from '../components/MapWrapper';
-import { searchBooks } from '../services/apiClient';
-import type Book from '../types/Book';
-import { MOCK_BOOKS } from '../mocks/mockedBooks';
+import { fetcher } from '../services/apiClient';
 
 export const SearchPage = () => {
-  const [books, setBooks] = useState<Book[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [searchQuery, setSearchQuery] = useState<string | null>(null);
+  const { data: books, error, isLoading } = useSWR(
+    searchQuery ? `/api/search?query=${searchQuery}` : null,
+    fetcher
+  );
 
-  const handleSearch = async (location: string) => {
-    setIsLoading(true);
-    setHasSearched(true);
-    const results = await searchBooks(location);
-    setBooks(results);
-    setIsLoading(false);
+  const handleSearch = (location: string) => {
+    setSearchQuery(location);
   };
 
   return (
@@ -40,21 +37,31 @@ export const SearchPage = () => {
         </Container>
       </Box>
       <Container size="md" mt={-60}>
-        <Paper p="xl" shadow="xl" radius="md" withBorder>
+        <Paper p="xl" shadow="xl">
           <SearchBar onSubmit={handleSearch} isLoading={isLoading} />
         </Paper>
       </Container>
       <Container size="lg" py="xl">
         <Stack gap="xl">
-          <MapWrapper books={books} />
-          
-          {hasSearched && !isLoading && (
-            <Box>
-              <Title order={2} mb="lg" c="navy.9">
-                Recommended Reading
-              </Title>
-              <BookGrid books={MOCK_BOOKS} />
-            </Box>
+          {error && (
+            <Text c="red" ta="center">
+              Whoops! Something went wrong. Check console for more details. 
+            </Text>
+          )}
+          {searchQuery && !isLoading && books && (
+            <>
+              {books.length > 0 && (
+                <Paper shadow="md" style={{ overflow: 'hidden' }}>
+                  <MapWrapper books={books} />
+                </Paper>
+              )}
+              <Box>
+                <Title order={2} mb="lg">
+                  Recommended Reading
+                </Title>
+                <BookGrid books={books} showSaveButton={true} />
+              </Box>
+            </>
           )}
         </Stack>
       </Container>
