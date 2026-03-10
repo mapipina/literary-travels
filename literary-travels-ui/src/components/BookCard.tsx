@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-// import { saveBook } from "../services/apiClient"; // Commented out for mock mode
+// import { saveBook } from "../services/apiClient"; 
 import type { SavedBook, default as Book } from "../types/Book";
-import { Badge, Button, Card, Group, Text, Box } from "@mantine/core";
+import { Badge, Button, Card, Group, Text, Box, Stack } from "@mantine/core";
 
 const shakeAnimation = `
   @keyframes shake {
@@ -29,77 +29,64 @@ export const BookCard: React.FC<BookCardProps> = ({ book, showSaveButton }) => {
     }, [status]);
 
     const handleSave = async () => {
-        if (!book.coordinates || book.publicationYear === null) {
-            console.warn("Missing critical data for persistence:", book.title);
-            return;
-        }
-
+        if (!book.coordinates || book.publicationYear === null) return;
         setStatus('loading');
 
-        // --- START MOCK LOGIC ---
-        // Set network latency to 1.5 seconds
+        // Mock Logic
         setTimeout(() => {
-            const simulateError = true; // Toggle this to true to test the "Shake"
-
+            const simulateError = false; 
             if (simulateError) {
-                console.error("Mock Save Failed: 504 Gateway Timeout");
                 setStatus('error');
             } else {
-                const payload: SavedBook = {
-                    ...book,
-                    coordinates: book.coordinates!,
-                    publicationYear: book.publicationYear!
-                };
-                console.log("Mock Save Success - Persisted Payload:", payload);
                 setStatus('saved');
             }
-        }, 1500);
-        // --- END MOCK LOGIC ---
-
-        /* TODO: Reimplement real logic :
-        try {
-            await saveBook(payload);
-            setStatus('saved');
-        } catch (error) {
-            setStatus('error');
-        } 
-        */
+        }, 1200);
     };
 
     return (
         <>
             <style>{shakeAnimation}</style>
-            <Card shadow="sm" padding="lg" radius="md" withBorder>
-                <Box style={{ flex: 1 }}>
-                    <Text fw={700} size="lg" lineClamp={2}>{book.title}</Text>
-                    <Text c="dimmed" size="sm" mt="xs">{book.author}</Text>
-
-                    <Group mt="md" gap="xs">
+            <Card>
+                <Card.Section withBorder inheritPadding py="md">
+                    <Stack gap={4}>
+                        <Text fw={700} size="lg" lineClamp={1} c="indigo.9">
+                            {book.title}
+                        </Text>
+                        <Text size="sm" c="dimmed" fw={500}>
+                            by {book.author}
+                        </Text>
+                    </Stack>
+                </Card.Section>
+                <Box py="md" style={{ flex: 1 }}>
+                    <Group gap="xs">
                         {book.genres.slice(0, 3).map((genre) => (
-                            <Badge key={genre} variant="light" color="violet">{genre}</Badge>
+                            <Badge key={genre} variant="dot">
+                                {genre}
+                            </Badge>
                         ))}
                     </Group>
+                    <Text size="xs" c="dimmed" mt="md" tt="uppercase" lts={1} fw={700}>
+                        📍 {book.location}
+                    </Text>
                 </Box>
-                {showSaveButton &&
-                <Button
-                    fullWidth
-                    mt="md"
-                    onClick={handleSave}
-                    loading={status === 'loading'}
-                    disabled={status === 'saved'}
-                    color={status === 'error' ? 'red' : status === 'saved' ? 'teal' : 'blue'}
-                    variant={status === 'saved' ? 'light' : 'filled'}
-                    style={{
-                        animation: status === 'error' ? 'shake 0.4s ease-in-out' : 'none',
-                        transition: 'all 0.2s ease'
-                    }}
-                >
-                    {status === 'idle' && 'Save Book'}
-                    {status === 'loading' && 'Saving...'}
-                    {status === 'saved' && '✓ Book has been saved'}
-                    {status === 'error' && 'Failed to save - Try Again?'}
-                </Button>}
-                
+                {showSaveButton && (
+                    <Card.Section inheritPadding pb="xl">
+                        <Button
+                            fullWidth
+                            onClick={handleSave}
+                            loading={status === 'loading'}
+                            disabled={status === 'saved'}
+                            color={status === 'error' ? 'red' : status === 'saved' ? 'teal' : 'indigo'}
+                            style={{
+                                animation: status === 'error' ? 'shake 0.4s ease-in-out' : 'none',
+                            }}
+                        >
+                            {status === 'idle' && 'Add to My Travels'}
+                            {status === 'saved' && '✓ Saved'}
+                            {status === 'error' && 'Failed - Try Again?'}
+                        </Button>
+                    </Card.Section>
+                )}
             </Card>
         </>
     );

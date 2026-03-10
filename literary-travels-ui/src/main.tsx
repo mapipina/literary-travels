@@ -4,10 +4,11 @@ import '@mantine/core/styles.css';
 import { MantineProvider } from '@mantine/core';
 import App from './App.tsx'
 import { BrowserRouter } from 'react-router-dom';
+import { theme } from './theme.ts'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <MantineProvider>
+    <MantineProvider theme={theme}>
       <BrowserRouter>
         <App />
       </BrowserRouter>

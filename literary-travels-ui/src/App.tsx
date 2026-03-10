@@ -9,9 +9,7 @@ function App() {
       navbar={{
         width: 300,
         breakpoint: 'sm',
-        collapsed: { mobile: false, desktop: true }, // Logic is now handled inside NavHeader
       }}
-      padding="md"
     >
       <NavHeader />
       <AppShell.Main>
