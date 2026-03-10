@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 // import { saveBook } from "../services/apiClient"; 
-import type { SavedBook, default as Book } from "../types/Book";
+import type { default as Book } from "../types/Book";
 import { Badge, Button, Card, Group, Text, Box, Stack } from "@mantine/core";
 
 const shakeAnimation = `
