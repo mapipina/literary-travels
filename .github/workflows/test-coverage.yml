@@ -1,0 +1,69 @@
+name: Test Coverage
+
+on:
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  pull-requests: write # Required for the bot to post the comment
+
+jobs:
+  api-tests:
+    name: API Tests & Coverage
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./literary-travels-api
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Switch to current node version
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: './literary-travels-api/package-lock.json'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Tests with Coverage
+        run: npm run coverage
+
+      - name: Post API Coverage Report
+        uses: davelosert/vitest-coverage-report-action@v2
+        if: always()
+        with:
+          name: 'Backend API Coverage'
+          working-directory: ./literary-travels-api
+
+  ui-tests:
+    name: UI Tests & Coverage
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./literary-travels-ui
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Switch to current node version
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: './literary-travels-api/package-lock.json'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Tests with Coverage
+        run: npm run coverage
+
+      - name: Post UI Coverage Report
+        uses: davelosert/vitest-coverage-report-action@v2
+        if: always()
+        with:
+          name: 'Frontend UI Coverage'
+          working-directory: ./literary-travels-ui
