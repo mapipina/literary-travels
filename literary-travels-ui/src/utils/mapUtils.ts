@@ -1,4 +1,4 @@
-import type { Book } from '../services/apiClient';
+import type Book from "../types/Book";
 
 export interface GroupedLocation {
     location: string;
@@ -21,7 +21,7 @@ export const groupBooksByLocation = (books: Book[]): GroupedLocation[] => {
                 books: []
             });
         }
-        // overridding the ts compiler here since we know the value will exist after the check above
+        // overriding the ts compiler here since we know the value will exist after the check above
         grouped.get(key)!.books.push(book);
     });
 

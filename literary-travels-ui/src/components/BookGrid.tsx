@@ -1,11 +1,13 @@
 import type Book from "../types/Book";
-import { Badge, Card, Group, SimpleGrid, Text } from '@mantine/core';
+import { SimpleGrid, Text } from '@mantine/core';
+import { BookCard } from "./BookCard";
 
 export interface BookGridProps {
     books: Book[];
+    showSaveButton?: boolean;
 }
 
-export const BookGrid: React.FC<BookGridProps> = ({ books }) => {
+export const BookGrid: React.FC<BookGridProps> = ({ books, showSaveButton = true }) => {
     if (books.length === 0) {
         return (
             <Text ta="center" mt="xl" c="dimmed">
@@ -22,29 +24,11 @@ export const BookGrid: React.FC<BookGridProps> = ({ books }) => {
             mt="xl"
         >
             {books.map(book => (
-                <Card
+                <BookCard
                     key={`${book.title}-${book.author}`}
-                    shadow="sm"
-                    padding="lg"
-                    radius="md"
-                    withBorder
-                >
-                    <Text fw={700} size="lg" lineClamp={2}>
-                        {book.title}
-                    </Text>
-
-                    <Text c="dimmed" size="sm" mt="xs">
-                        {book.author}
-                    </Text>
-                    <Group mt="md" gap="xs">
-                        {book.publicationYear && <Badge variant="light" color="gray">{book.publicationYear}</Badge>}
-                        {book.genres.map((genre) => (
-                            <Badge key={genre} variant="light" color="violet">
-                                {genre}
-                            </Badge>
-                        ))}
-                    </Group>
-                </Card>
+                    book={book}
+                    showSaveButton={showSaveButton}
+                />
             ))}
         </SimpleGrid>
     )

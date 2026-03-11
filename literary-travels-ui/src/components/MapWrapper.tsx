@@ -1,79 +1,61 @@
-import { useMemo, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { groupBooksByLocation } from '../utils/mapUtils';
-import type { Book } from '../services/apiClient';
-
-import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+import 'leaflet/dist/leaflet.css';
+import type Book from '../types/Book';
+import { rem } from '@mantine/core';
 
-const DefaultIcon = L.icon({
-    iconUrl: icon,
-    shadowUrl: iconShadow,
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
+const goldIcon = new L.DivIcon({
+  className: 'custom-div-icon',
+  html: `
+    <div style="
+      background-color: #c5a059; 
+      width: 24px; 
+      height: 24px; 
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      border: 2px solid white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    "></div>`,
+  iconSize: [24, 24],
+  iconAnchor: [12, 24],
 });
-L.Marker.prototype.options.icon = DefaultIcon;
 
-// Helper component to auto-recenter the map when search results change
-const MapUpdater = ({ center }: { center: [number, number] }) => {
-    const map = useMap();
-    useEffect(() => {
-        map.flyTo(center, map.getZoom());
-    }, [center, map]);
-    return null;
-};
-
-interface MapWrapperProps {
-    books: Book[];
+function ChangeView({ center }: { center: [number, number] }) {
+  const map = useMap();
+  map.setView(center, map.getZoom());
+  return null;
 }
 
-export const MapWrapper: React.FC<MapWrapperProps> = ({ books }) => {
-    const groupedLocations = useMemo(() => groupBooksByLocation(books), [books]);
+export const MapWrapper: React.FC<{ books: Book[] }> = ({ books }) => {
+  const defaultCenter: [number, number] = [40.7128, -74.0060]; 
+  
+  const activeCenter: [number, number] = books[0]?.coordinates 
+    ? [books[0].coordinates.lat, books[0].coordinates.lng] 
+    : defaultCenter;
 
-    // Default to the first found coordinate, or fallback to a standard view (e.g., center of US/Atlantic)
-    const centerPoint: [number, number] = groupedLocations.length > 0
-        ? [groupedLocations[0].coordinates.lat, groupedLocations[0].coordinates.lng]
-        : [39.8283, -98.5795]; // Geographic center of contiguous US
-
-    // If there are no books with coordinates, we can either hide the map or show it empty.
-    // For now, we'll render it so the UI doesn't jump around.
-    return (
-        <MapContainer
-            center={centerPoint}
-            zoom={4}
-            style={{ height: '400px', width: '100%', borderRadius: '8px', zIndex: 1 }}
-        >
-            <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            
-            <MapUpdater center={centerPoint} />
-
-            {groupedLocations.map((loc) => (
-                <Marker
-                    key={`${loc.coordinates.lat}-${loc.coordinates.lng}`}
-                    position={[loc.coordinates.lat, loc.coordinates.lng]}
-                >
-                    <Popup>
-                        <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
-                            <strong style={{ display: 'block', marginBottom: '4px' }}>
-                                {loc.location}
-                            </strong>
-                            <ul style={{ paddingLeft: '20px', margin: 0, fontSize: '0.9rem' }}>
-                                {loc.books.map((book, idx) => (
-                                    <li key={idx} style={{ marginBottom: '4px' }}>
-                                        <em>{book.title}</em> <br/>
-                                        <span style={{ color: '#666', fontSize: '0.8rem' }}>by {book.author}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    </Popup>
-                </Marker>
-            ))}
-        </MapContainer>
-    );
+  return (
+    <div style={{ height: rem(400), borderRadius: '12px', overflow: 'hidden', border: '1px solid #e9ecef' }}>
+      <MapContainer center={activeCenter} zoom={4} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
+        <TileLayer
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        />
+        <ChangeView center={activeCenter} />
+        {books.map((book, idx) => (
+          book.coordinates && (
+            <Marker 
+              key={`${book.title}-${idx}`} 
+              position={[book.coordinates.lat, book.coordinates.lng]} 
+              icon={goldIcon}
+            >
+              <Popup>
+                <strong>{book.title}</strong><br />
+                {book.author}
+              </Popup>
+            </Marker>
+          )
+        ))}
+      </MapContainer>
+    </div>
+  );
 };

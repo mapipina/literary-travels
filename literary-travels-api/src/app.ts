@@ -3,6 +3,7 @@ import cors from 'cors';
 import { getBooksByLocation } from './services/WikidataService';
 import SavedBook from './models/SavedBook';
 import sequelize from './config/database';
+import SearchCache from './models/SearchCache';
 
 const app = express();
 app.use(cors());
@@ -28,14 +29,38 @@ app.get('/api/health', async (_req: Request, res: Response) => {
 });
 
 app.get('/api/search', async (req: Request, res: Response) => {
-  // res.json({ message: `Search successful for: ${query}`, data: [] });
-  try {
+try {
     const location = req.query.query as string;
     if (!location) {
       return res.status(400).json({ error: 'Location param is required.' });
     }
 
+    const normalizedLocation = location.toLowerCase().trim();
+    const cachedSearch = await SearchCache.findOne({ 
+        where: { location: normalizedLocation } 
+    });
+
+    if (cachedSearch && new Date() < cachedSearch.expiresAt) {
+      console.log(`Cache HIT for location: ${normalizedLocation}`);
+      return res.status(200).json({ 
+        message: `Found cached books for ${location}`, 
+        data: cachedSearch.data 
+      });
+    }
+
+    console.log(`Cache MISS for location: ${normalizedLocation}. Fetching from Wikidata...`);
+
     const books = await getBooksByLocation(location);
+    if (books.length > 0) {
+        const expirationDate = new Date();
+        expirationDate.setHours(expirationDate.getHours() + 24); // Cache for 24 hours
+
+        await SearchCache.upsert({
+            location: normalizedLocation,
+            data: books,
+            expiresAt: expirationDate
+        });
+    }
     const successMsg = books.length > 0 ? `Found matched books for ${location}` : `No books found based in ${location}`;
     return res.status(200).json({ message: successMsg, data: books });
   } catch (e) {
@@ -47,11 +72,12 @@ app.get('/api/search', async (req: Request, res: Response) => {
 app.post('/api/books', async (req: Request, res: Response) => {
   try {
     const { book } = req.body;
-    if (!book?.title || !book?.author || !book?.location || !book?.lat || !book?.lng) {
+    if (!book?.title || !book?.author || !book?.location || !book?.coordinates?.lat || !book?.coordinates?.lng) {
       return res.status(400).json({
-        error: 'Critical data missing from request. Required: title, author, location, lat, lng'
+        error: 'Critical data missing from request. Required: title, author, location, coordinates.lat, coordinates.lng'
       });
     }
+    
     const existingBook = await SavedBook.findOne({
       where: {
         title: book.title,
@@ -61,7 +87,7 @@ app.post('/api/books', async (req: Request, res: Response) => {
 
     if (existingBook) {
       return res.status(409).json({
-        message: 'This book is already in your saved trips.', // TODO associate books to tripId and user
+        message: 'This book is already in your saved trips.', 
         book: existingBook
       });
     }
@@ -70,8 +96,8 @@ app.post('/api/books', async (req: Request, res: Response) => {
       title: book.title,
       author: book.author,
       location: book.location,
-      lat: book.lat,
-      lng: book.lng,
+      lat: book.coordinates.lat,
+      lng: book.coordinates.lng,
       genres: book.genres || [],
       publicationYear: book.publicationYear || null
     });
@@ -81,18 +107,31 @@ app.post('/api/books', async (req: Request, res: Response) => {
       book: newBook
     });
   } catch (e) {
-    console.error(`Error occurred trrying to save book to db: ${e}`);
+    console.error(`Error occurred trying to save book to db: ${e}`);
     return res.status(500).json({ error: 'Failed to save book to db' });
   }
 });
 
 app.get('/api/books', async (_req: Request, res: Response) => {
   try {
-    // assuming the user for this app is a single user + use case so no need to look up books by tripId or userId
-    const savedBooks = await SavedBook.findAll();
+    const savedBooks = await SavedBook.findAll({
+      order: [['createdAt', 'DESC']]
+    });
+
+    const formattedBooks = savedBooks.map(book => {
+      const data = book.get({ plain: true });
+      return {
+        ...data,
+        coordinates: {
+          lat: data.lat,
+          lng: data.lng
+        }
+      };
+    });
+
     return res.status(200).json({
-      message: savedBooks.length > 0 ? 'Found these associated books' : 'No books saved yet',
-      data: savedBooks
+      message: formattedBooks.length > 0 ? 'Found these associated books' : 'No books saved yet',
+      data: formattedBooks
     });
   } catch (e) {
     console.log(`Error occurred retrieving books: ${e}`);
