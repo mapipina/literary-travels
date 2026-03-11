@@ -20,7 +20,7 @@ interface BookCardProps {
 }
 
 export const BookCard: React.FC<BookCardProps> = ({ book, showSaveButton }) => {
-const { mutate } = useSWRConfig(); 
+    const { mutate } = useSWRConfig();
     const [status, setStatus] = useState<'idle' | 'loading' | 'saved' | 'error'>('idle');
 
     useEffect(() => {
@@ -42,8 +42,8 @@ const { mutate } = useSWRConfig();
             };
             await saveBook(payload);
             setStatus('saved');
-            mutate('/api/books'); 
-            
+            mutate('/api/books');
+
         } catch (error) {
             console.error(error);
             setStatus('error');
@@ -66,8 +66,13 @@ const { mutate } = useSWRConfig();
                 </Card.Section>
                 <Box py="md" style={{ flex: 1 }}>
                     <Group gap="xs">
-                        {book.genres.slice(0, 3).map((genre) => (
-                            <Badge key={genre} variant="dot">
+                        {book.publicationYear && (
+                            <Badge variant="outline" radius="sm">
+                                {book.publicationYear}
+                            </Badge>
+                        )}
+                        {book.genres?.map((genre) => (
+                            <Badge key={genre} variant="dot" color="navy.7" radius="sm">
                                 {genre}
                             </Badge>
                         ))}

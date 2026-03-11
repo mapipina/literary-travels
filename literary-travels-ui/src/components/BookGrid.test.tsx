@@ -1,8 +1,12 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { MantineProvider } from '@mantine/core';
 import { BookGrid } from './BookGrid';
 import type Book from '../types/Book';
+
+vi.mock('swr', () => ({
+    useSWRConfig: () => ({ mutate: vi.fn() }),
+}));
 
 describe('BookGrid Component', () => {
     const renderWithMantine = (component: React.ReactNode) => {
@@ -22,22 +26,24 @@ describe('BookGrid Component', () => {
                 title: 'The Marlow Murder Club',
                 author: 'Robert Thorogood',
                 location: 'Marlow',
-                genres: []
+                genres: [],
+                publicationYear: null
             },
             {
                 title: 'Shakespeare and Hathaway',
                 author: 'Jude Tindall',
                 location: 'Stratford-upon-Avon',
-                genres: []
+                genres: [],
+                publicationYear: null 
             }
         ];
 
         renderWithMantine(<BookGrid books={mockBooks} />);
 
-        expect(screen.getByText('The Marlow Murder Club')).toBeInTheDocument();
-        expect(screen.getByText('Shakespeare and Hathaway')).toBeInTheDocument();
-        expect(screen.getByText('Robert Thorogood')).toBeInTheDocument();
-        expect(screen.getByText('Jude Tindall')).toBeInTheDocument();
+        expect(screen.getByText(/The Marlow Murder Club/i)).toBeInTheDocument();
+        expect(screen.getByText(/Shakespeare and Hathaway/i)).toBeInTheDocument();
+        expect(screen.getByText(/Robert Thorogood/i)).toBeInTheDocument();
+        expect(screen.getByText(/Jude Tindall/i)).toBeInTheDocument();
     });
 
     it('conditionally renders genre and year badges only if the data exists', () => {
@@ -53,14 +59,15 @@ describe('BookGrid Component', () => {
                 title: 'Shakespeare and Hathaway',
                 author: 'Jude Tindall',
                 location: 'Stratford-upon-Avon',
-                genres: []
+                genres: [],
+                publicationYear: null
             }
         ];
 
         renderWithMantine(<BookGrid books={mockBooks} />);
 
-        expect(screen.getByText('2021')).toBeInTheDocument();
-        expect(screen.getByText('Cozy Mystery')).toBeInTheDocument();
-        expect(screen.getByText('Shakespeare and Hathaway')).toBeInTheDocument();
+        expect(screen.getByText(/2021/i)).toBeInTheDocument();
+        expect(screen.getByText(/Cozy Mystery/i)).toBeInTheDocument();
+        expect(screen.getByText(/Shakespeare and Hathaway/i)).toBeInTheDocument();
     });
 });
