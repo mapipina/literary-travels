@@ -12,39 +12,39 @@ app.use(express.json());
 app.get('/api/health', async (_req: Request, res: Response) => {
   try {
     await sequelize.authenticate();
-    
-    res.status(200).json({ 
-      status: 'ok', 
+
+    res.status(200).json({
+      status: 'ok',
       database: 'connected',
-      message: 'Literary Travels API and Neon DB are healthy.' 
+      message: 'Literary Travels API and Neon DB are healthy.'
     });
   } catch (error) {
     console.error('Health check failed:', error);
-    res.status(500).json({ 
-      status: 'error', 
+    res.status(500).json({
+      status: 'error',
       database: 'disconnected',
-      message: 'API is up, but the database is unreachable.' 
+      message: 'API is up, but the database is unreachable.'
     });
   }
 });
 
 app.get('/api/search', async (req: Request, res: Response) => {
-try {
+  try {
     const location = req.query.query as string;
     if (!location) {
       return res.status(400).json({ error: 'Location param is required.' });
     }
 
     const normalizedLocation = location.toLowerCase().trim();
-    const cachedSearch = await SearchCache.findOne({ 
-        where: { location: normalizedLocation } 
+    const cachedSearch = await SearchCache.findOne({
+      where: { location: normalizedLocation }
     });
 
     if (cachedSearch && new Date() < cachedSearch.expiresAt) {
       console.log(`Cache HIT for location: ${normalizedLocation}`);
-      return res.status(200).json({ 
-        message: `Found cached books for ${location}`, 
-        data: cachedSearch.data 
+      return res.status(200).json({
+        message: `Found cached books for ${location}`,
+        data: cachedSearch.data
       });
     }
 
@@ -52,14 +52,14 @@ try {
 
     const books = await getBooksByLocation(location);
     if (books.length > 0) {
-        const expirationDate = new Date();
-        expirationDate.setHours(expirationDate.getHours() + 24); // Cache for 24 hours
+      const expirationDate = new Date();
+      expirationDate.setHours(expirationDate.getHours() + 24); // Cache for 24 hours
 
-        await SearchCache.upsert({
-            location: normalizedLocation,
-            data: books,
-            expiresAt: expirationDate
-        });
+      await SearchCache.upsert({
+        location: normalizedLocation,
+        data: books,
+        expiresAt: expirationDate
+      });
     }
     const successMsg = books.length > 0 ? `Found matched books for ${location}` : `No books found based in ${location}`;
     return res.status(200).json({ message: successMsg, data: books });
@@ -72,27 +72,28 @@ try {
 app.post('/api/books', async (req: Request, res: Response) => {
   try {
     const { book } = req.body;
-    if (!book?.title || !book?.author || !book?.location || !book?.coordinates?.lat || !book?.coordinates?.lng) {
+    if (!book?.wikidataId || !book?.title || !book?.author || !book?.location || !book?.coordinates?.lat || !book?.coordinates?.lng) {
       return res.status(400).json({
-        error: 'Critical data missing from request. Required: title, author, location, coordinates.lat, coordinates.lng'
+        error: 'Critical data missing from request. Required: wikidataId, title, author, location, coordinates.lat, coordinates.lng'
       });
     }
-    
+
     const existingBook = await SavedBook.findOne({
       where: {
-        title: book.title,
-        author: book.author
+        wikidataId: book.wikidataId
       }
     });
 
     if (existingBook) {
       return res.status(409).json({
-        message: 'This book is already in your saved trips.', 
+        message: 'This book is already in your saved trips.',
         book: existingBook
       });
     }
 
     const newBook = await SavedBook.create({
+      wikidataId: book.wikidataId,
+      isbn: book.isbn || null,
       title: book.title,
       author: book.author,
       location: book.location,
