@@ -42,4 +42,14 @@ export const getAllSavedBooks = async (): Promise<Book[]> => {
   }
 }
 
+export const removeBook = async (wikidataId: string) => {
+  try {
+    const response = await axios.delete(`${API_URL}/api/books/${wikidataId}`);
+    return response.data;
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to remove book';
+    throw new Error(errorMessage);
+  }
+};
+
 export const fetcher = (url: string) => axios.get(`${API_URL}${url}`).then(res => res.data.data);

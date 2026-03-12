@@ -1,4 +1,6 @@
 export default interface Book {
+    wikidataId: string;
+    isbn: string | null;
     title: string;
     author: string;
     location: string;

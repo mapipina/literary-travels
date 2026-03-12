@@ -140,4 +140,29 @@ app.get('/api/books', async (_req: Request, res: Response) => {
   }
 });
 
+app.delete('/api/books/:wikidataId', async (req: Request, res: Response) => {
+  try {
+    const { wikidataId } = req.params;
+
+    if (!wikidataId) {
+      return res.status(400).json({ error: 'Missing wikidataId parameter' });
+    }
+
+    const deletedCount = await SavedBook.destroy({
+      where: { wikidataId }
+    });
+
+    if (deletedCount === 0) {
+      return res.status(404).json({ error: 'Book not found in saved trips' });
+    }
+
+    return res.status(200).json({ message: 'Book removed successfully' });
+
+  } catch (e) {
+    console.error(`Error occurred trying to delete book from db: ${e}`);
+    return res.status(500).json({ error: 'Failed to remove book from db' });
+  }
+});
+
+
 export default app; 
