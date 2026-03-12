@@ -93,7 +93,7 @@ describe('API Routes', () => {
     });
   });
 
-  describe('POST /api/books', () => {
+describe('POST /api/books', () => {
     
     it('returns 400 if critical payload data is missing', async () => {
       const invalidPayload = { title: 'Incomplete Book', author: 'Author', location: 'City' };
@@ -110,7 +110,10 @@ describe('API Routes', () => {
       vi.mocked(SavedBook.findOne).mockResolvedValueOnce({ title: 'Duplicate' } as any);
 
       const validPayload = { 
-        title: 'Duplicate', author: 'Author', location: 'City', 
+        wikidataId: 'Q123',
+        title: 'Duplicate', 
+        author: 'Author', 
+        location: 'City', 
         coordinates: { lat: 10, lng: 20 } 
       };
 
@@ -127,7 +130,10 @@ describe('API Routes', () => {
       vi.mocked(SavedBook.create).mockResolvedValueOnce({ id: 1, title: 'New Book' } as any);
 
       const validPayload = { 
-        title: 'New Book', author: 'Author', location: 'City', 
+        wikidataId: 'Q456',
+        title: 'New Book', 
+        author: 'Author', 
+        location: 'City', 
         coordinates: { lat: 10, lng: 20 } 
       };
 
@@ -137,6 +143,7 @@ describe('API Routes', () => {
 
       expect(response.status).toBe(201);
       expect(SavedBook.create).toHaveBeenCalledWith(expect.objectContaining({
+        wikidataId: 'Q456',
         lat: 10,
         lng: 20
       }));
