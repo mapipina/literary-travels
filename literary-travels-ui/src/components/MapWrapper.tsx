@@ -1,61 +1,95 @@
+import { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { Box, Text, Stack, ScrollArea } from '@mantine/core';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type Book from '../types/Book';
-import { rem } from '@mantine/core';
 
 const goldIcon = new L.DivIcon({
-  className: 'custom-div-icon',
-  html: `
-    <div style="
-      background-color: #c5a059; 
-      width: 24px; 
-      height: 24px; 
-      border-radius: 50% 50% 50% 0;
-      transform: rotate(-45deg);
-      border: 2px solid white;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    "></div>`,
-  iconSize: [24, 24],
-  iconAnchor: [12, 24],
+    className: 'custom-div-icon',
+    html: `<svg width="24" height="36" viewBox="0 0 24 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 0C5.37258 0 0 5.37258 0 12C0 21 12 36 12 36C12 36 24 21 24 12C24 5.37258 18.6274 0 12 0Z" fill="var(--mantine-color-gold-5)"/>
+            <circle cx="12" cy="12" r="6" fill="white"/>
+           </svg>`,
+    iconSize: [24, 36],
+    iconAnchor: [12, 36],
+    popupAnchor: [0, -36],
 });
 
-function ChangeView({ center }: { center: [number, number] }) {
-  const map = useMap();
-  map.setView(center, map.getZoom());
-  return null;
+const MapUpdater = ({ center }: { center: [number, number] }) => {
+    const map = useMap();
+    useEffect(() => {
+        map.setView(center, map.getZoom());
+    }, [center, map]);
+    return null;
+};
+
+interface MapWrapperProps {
+    books: Book[];
 }
 
-export const MapWrapper: React.FC<{ books: Book[] }> = ({ books }) => {
-  const defaultCenter: [number, number] = [40.7128, -74.0060]; 
-  
-  const activeCenter: [number, number] = books[0]?.coordinates 
-    ? [books[0].coordinates.lat, books[0].coordinates.lng] 
-    : defaultCenter;
+export const MapWrapper = ({ books }: MapWrapperProps) => {
+    const groupedBooks = books.reduce((acc, book) => {
+        if (!book.coordinates) return acc;
+        const key = `${book.coordinates.lat},${book.coordinates.lng}`;
+        
+        if (!acc[key]) {
+            acc[key] = [];
+        }
+        acc[key].push(book);
+        
+        return acc;
+    }, {} as Record<string, Book[]>);
 
-  return (
-    <div style={{ height: rem(400), borderRadius: '12px', overflow: 'hidden', border: '1px solid #e9ecef' }}>
-      <MapContainer center={activeCenter} zoom={4} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        />
-        <ChangeView center={activeCenter} />
-        {books.map((book, idx) => (
-          book.coordinates && (
-            <Marker 
-              key={`${book.title}-${idx}`} 
-              position={[book.coordinates.lat, book.coordinates.lng]} 
-              icon={goldIcon}
+    const firstValidBook = books.find(b => b.coordinates);
+    const center: [number, number] = firstValidBook && firstValidBook.coordinates 
+        ? [firstValidBook.coordinates.lat, firstValidBook.coordinates.lng] 
+        : [40.7128, -74.0060]; // Fallback to NYC
+
+    return (
+        <Box style={{ height: 400, width: '100%', borderRadius: 'var(--mantine-radius-md)', overflow: 'hidden' }}>
+            <MapContainer 
+                center={center} 
+                zoom={4} 
+                scrollWheelZoom={false} 
+                style={{ height: '100%', width: '100%' }}
             >
-              <Popup>
-                <strong>{book.title}</strong><br />
-                {book.author}
-              </Popup>
-            </Marker>
-          )
-        ))}
-      </MapContainer>
-    </div>
-  );
+                <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                />
+                <MapUpdater center={center} />
+                {Object.entries(groupedBooks).map(([coordStr, locationBooks]) => {
+                    const [lat, lng] = coordStr.split(',').map(Number);
+                    
+                    return (
+                        <Marker key={coordStr} position={[lat, lng]} icon={goldIcon}>
+                            <Popup minWidth={220}>
+                                <ScrollArea h={locationBooks.length > 2 ? 180 : 'auto'} type="hover" offsetScrollbars>
+                                    <Stack gap="xs" pr="sm">
+                                        {locationBooks.map((book, index) => (
+                                            <Box 
+                                                key={`${book.title}-${index}`} 
+                                                pb={index !== locationBooks.length - 1 ? "xs" : 0}
+                                                style={{ 
+                                                    borderBottom: index !== locationBooks.length - 1 ? '1px solid var(--mantine-color-gray-3)' : 'none' 
+                                                }}
+                                            >
+                                                <Text fw={700} size="sm" lh={1.2} mb={2}>
+                                                    {book.title}
+                                                </Text>
+                                                <Text size="xs" c="dimmed">
+                                                    by {book.author}
+                                                </Text>
+                                            </Box>
+                                        ))}
+                                    </Stack>
+                                </ScrollArea>
+                            </Popup>
+                        </Marker>
+                    );
+                })}
+            </MapContainer>
+        </Box>
+    );
 };

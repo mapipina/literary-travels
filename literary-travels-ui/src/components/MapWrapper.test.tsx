@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import { MantineProvider } from '@mantine/core';
 import { MapWrapper } from './MapWrapper';
 import type Book from '../types/Book';
 
@@ -33,6 +34,10 @@ vi.mock('leaflet', () => {
 });
 
 describe('MapWrapper Component', () => {
+    const renderWithMantine = (component: React.ReactNode) => {
+        return render(<MantineProvider>{component}</MantineProvider>);
+    };
+
     const mockBooks: Book[] = [
         {
             title: 'Midnight in Paris',
@@ -56,40 +61,47 @@ describe('MapWrapper Component', () => {
             location: 'Unknown',
             genres: [],
             publicationYear: null
+        },
+        {
+            title: 'Another Day in Paris',
+            author: 'Jane Doe',
+            location: 'Paris',
+            coordinates: { lat: 48.8566, lng: 2.3522 },
+            genres: [],
+            publicationYear: null
         }
     ];
 
     it('renders the base map container and tile layer', () => {
-        render(<MapWrapper books={[]} />);
+        renderWithMantine(<MapWrapper books={[]} />);
         
         expect(screen.getByTestId('map-container')).toBeInTheDocument();
         expect(screen.getByTestId('tile-layer')).toBeInTheDocument();
     });
 
     it('centers the map on the first book that has coordinates', () => {
-        render(<MapWrapper books={mockBooks} />);
+        renderWithMantine(<MapWrapper books={mockBooks} />);
         
         const mapContainer = screen.getByTestId('map-container');
-        
         expect(mapContainer.getAttribute('data-center')).toBe(JSON.stringify([48.8566, 2.3522]));
     });
 
-    it('renders exactly one marker per book that contains coordinates', () => {
-        render(<MapWrapper books={mockBooks} />);
+    it('renders exactly one marker per unique coordinate and groups books inside', () => {
+        renderWithMantine(<MapWrapper books={mockBooks} />);
         
         const markers = screen.getAllByTestId('map-marker');
-        
+
         expect(markers).toHaveLength(2);
         
-        expect(screen.getByText('Midnight in Paris')).toBeInTheDocument();
-        expect(screen.getByText('Jane Doe')).toBeInTheDocument();
-        expect(screen.getByText('London Calling')).toBeInTheDocument();
+        expect(screen.getByText(/Midnight in Paris/i)).toBeInTheDocument();
+        expect(screen.getByText(/Another Day in Paris/i)).toBeInTheDocument();
+        expect(screen.getByText(/London Calling/i)).toBeInTheDocument();
     });
 
     it('falls back to the default center (NYC) when no books have coordinates', () => {
-        const booksWithoutCoords = [mockBooks[2]]; // Only the book missing coordinates
+        const booksWithoutCoords = [mockBooks[2]]; 
         
-        render(<MapWrapper books={booksWithoutCoords} />);
+        renderWithMantine(<MapWrapper books={booksWithoutCoords} />);
         
         const mapContainer = screen.getByTestId('map-container');
         expect(mapContainer.getAttribute('data-center')).toBe(JSON.stringify([40.7128, -74.006]));
