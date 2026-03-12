@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import type { default as Book, SavedBook } from "../types/Book";
 import { Badge, Button, Card, Group, Text, Box, Stack } from "@mantine/core";
 import { useSWRConfig } from "swr";
-import { saveBook } from "../services/apiClient";
+import { saveBook, removeBook } from "../services/apiClient";
 
 const shakeAnimation = `
   @keyframes shake {
@@ -16,12 +16,14 @@ const shakeAnimation = `
 
 interface BookCardProps {
     book: Book;
-    showSaveButton?: boolean;
+    isSavedView?: boolean;
 }
 
-export const BookCard: React.FC<BookCardProps> = ({ book, showSaveButton }) => {
+type CardStatus = 'idle' | 'saving' | 'saved' | 'removing' | 'removed' | 'error';
+
+export const BookCard: React.FC<BookCardProps> = ({ book, isSavedView = false }) => {
     const { mutate } = useSWRConfig();
-    const [status, setStatus] = useState<'idle' | 'loading' | 'saved' | 'error'>('idle');
+    const [status, setStatus] = useState<CardStatus>('idle');
 
     useEffect(() => {
         if (status === 'error') {
@@ -32,7 +34,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, showSaveButton }) => {
 
     const handleSave = async () => {
         if (!book.coordinates || book.publicationYear === null) return;
-        setStatus('loading');
+        setStatus('saving');
 
         try {
             const payload: SavedBook = {
@@ -43,17 +45,32 @@ export const BookCard: React.FC<BookCardProps> = ({ book, showSaveButton }) => {
             await saveBook(payload);
             setStatus('saved');
             mutate('/api/books');
-
         } catch (error) {
             console.error(error);
             setStatus('error');
         }
     };
 
+    const handleRemove = async () => {
+        setStatus('removing');
+
+        try {
+            await removeBook(book.wikidataId);
+            setStatus('removed');
+            mutate('/api/books');
+        } catch (error) {
+            console.error(error);
+            setStatus('error');
+        }
+    };
+
+    const isActionLoading = status === 'saving' || status === 'removing';
+    const isActionComplete = status === 'saved' || status === 'removed';
+
     return (
         <>
             <style>{shakeAnimation}</style>
-            <Card>
+            <Card style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                 <Card.Section withBorder inheritPadding py="md">
                     <Stack gap={4}>
                         <Text fw={700} size="lg" lineClamp={1} c="indigo.9">
@@ -81,24 +98,38 @@ export const BookCard: React.FC<BookCardProps> = ({ book, showSaveButton }) => {
                         📍 {book.location}
                     </Text>
                 </Box>
-                {showSaveButton && (
-                    <Card.Section inheritPadding pb="xl">
+                <Card.Section inheritPadding pb="xl" mt="auto">
+                    {!isSavedView ? (
                         <Button
                             fullWidth
                             onClick={handleSave}
-                            loading={status === 'loading'}
-                            disabled={status === 'saved'}
+                            loading={isActionLoading} // <-- Used here
+                            disabled={isActionComplete}
                             color={status === 'error' ? 'red' : status === 'saved' ? 'teal' : 'indigo'}
-                            style={{
-                                animation: status === 'error' ? 'shake 0.4s ease-in-out' : 'none',
-                            }}
+                            style={{ animation: status === 'error' ? 'shake 0.4s ease-in-out' : 'none' }}
                         >
                             {status === 'idle' && 'Add to My Travels'}
+                            {status === 'saving' && 'Saving...'}
                             {status === 'saved' && '✓ Saved'}
                             {status === 'error' && 'Failed - Try Again?'}
                         </Button>
-                    </Card.Section>
-                )}
+                    ) : (
+                        <Button
+                            fullWidth
+                            variant="light"
+                            onClick={handleRemove}
+                            loading={isActionLoading} // <-- And used here
+                            disabled={isActionComplete}
+                            color={status === 'error' ? 'red' : status === 'removed' ? 'gray' : 'red'}
+                            style={{ animation: status === 'error' ? 'shake 0.4s ease-in-out' : 'none' }}
+                        >
+                            {status === 'idle' && 'Remove from Travels'}
+                            {status === 'removing' && 'Removing...'}
+                            {status === 'removed' && '✓ Removed'}
+                            {status === 'error' && 'Failed - Try Again?'}
+                        </Button>
+                    )}
+                </Card.Section>
             </Card>
         </>
     );

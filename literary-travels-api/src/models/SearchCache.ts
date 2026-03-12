@@ -12,10 +12,12 @@ interface SearchCacheAttributes {
 interface SearchCacheCreationAttributes extends Optional<SearchCacheAttributes, 'id'> {}
 
 class SearchCache extends Model<SearchCacheAttributes, SearchCacheCreationAttributes> implements SearchCacheAttributes {
-  public id!: number;
-  public location!: string;
-  public data!: any;
-  public expiresAt!: Date;
+    public declare id: number;
+    public declare location: string;
+    public declare data: any; 
+    public declare expiresAt: Date;
+    public declare readonly createdAt: Date;
+    public declare readonly updatedAt: Date;
 }
 
 SearchCache.init(

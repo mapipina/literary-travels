@@ -59,7 +59,7 @@ export const SearchPage = () => {
                 <Title order={2} mb="lg">
                   Recommended Reading
                 </Title>
-                <BookGrid books={books} showSaveButton={true} />
+                <BookGrid books={books}/>
               </Box>
             </>
           )}

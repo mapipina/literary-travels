@@ -13,7 +13,7 @@ export const SavedTrips = () => {
     return (
         <Container size="lg" py="xl">
             <MapWrapper books={savedBooks || []} />
-            <BookGrid books={savedBooks || []} showSaveButton={false} />
+            <BookGrid books={savedBooks || []} isSavedView={true}/>
         </Container>
     );
 };

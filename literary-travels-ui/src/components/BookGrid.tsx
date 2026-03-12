@@ -4,10 +4,10 @@ import { BookCard } from "./BookCard";
 
 export interface BookGridProps {
     books: Book[];
-    showSaveButton?: boolean;
+    isSavedView?: boolean;
 }
 
-export const BookGrid: React.FC<BookGridProps> = ({ books, showSaveButton = true }) => {
+export const BookGrid: React.FC<BookGridProps> = ({ books, isSavedView }) => {
     if (books.length === 0) {
         return (
             <Text ta="center" mt="xl" c="dimmed">
@@ -25,9 +25,9 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, showSaveButton = true
         >
             {books.map(book => (
                 <BookCard
-                    key={`${book.title}-${book.author}`}
+                    key={book.wikidataId}
                     book={book}
-                    showSaveButton={showSaveButton}
+                    isSavedView={isSavedView}
                 />
             ))}
         </SimpleGrid>
