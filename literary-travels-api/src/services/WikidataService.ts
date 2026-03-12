@@ -33,10 +33,10 @@ const parseCoordinates = (pointString?: string): { lat: number, lng: number } | 
 
 export const getWikiData = async (location: string): Promise<WikidataRawResponse> => {
     const sparqlQuery = `
-        SELECT ?bookLabel ?authorLabel ?locationLabel ?coordinates ?genreLabel ?pubDate WHERE {
+        SELECT ?book ?bookLabel ?authorLabel ?locationLabel ?coordinates ?genreLabel ?pubDate ?isbn13 ?isbn10 WHERE {
         ?book wdt:P31/wdt:P279* wd:Q7725634. # instance of literary work
         ?book wdt:P840 ?location.            # narrative location
-        ?location wdt:P625 ?coordinates.     # coordinate location, will come necessary for map pinning and visualization
+        ?location wdt:P625 ?coordinates.     
         
         # Filter by the user's search term (case-insensitive)
         ?location rdfs:label ?locName.
@@ -46,6 +46,8 @@ export const getWikiData = async (location: string): Promise<WikidataRawResponse
         OPTIONAL { ?book wdt:P50 ?author. } 
         OPTIONAL { ?book wdt:P136 ?genre. }
         OPTIONAL { ?book wdt:P577 ?pubDate. }
+        OPTIONAL { ?book wdt:P212 ?isbn13. } # ISBN-13
+        OPTIONAL { ?book wdt:P957 ?isbn10. } # ISBN-10
         
         SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
         }
@@ -65,42 +67,53 @@ export const getWikiData = async (location: string): Promise<WikidataRawResponse
 export const getBooksByLocation = async (location: string): Promise<WikiDataDTO[]> => {
     try {
         const data = await getWikiData(location);
-        const mappedBooks = data.results.bindings.map((binding: any) => ({
-            title: binding.bookLabel?.value,
-            author: binding.authorLabel?.value || 'Unknown',
-            location: binding.locationLabel?.value,
-            coordinates: parseCoordinates(binding.coordinates?.value),
-            genre: binding.genreLabel?.value,
-            publicationYear: binding.pubDate?.value ? parseInt(binding.pubDate.value, 10) : null,
-        }));
 
-        // Discovered that WikiData will send back a separate entry for each genre a book is classified as
-        // so deduping the books and grouping the genres 
-        return mappedBooks.reduce((acc: WikiDataDTO[], curr) => {
-            const existingBook = acc.find(book =>
-                book.title === curr.title && book.author === curr.author
-            );
+        return Array.from(
+            data.results.bindings.reduce((acc: Map<string, WikiDataDTO>, binding: any) => {
+                const wikidataUri = binding.book?.value;
+                const wikidataId = wikidataUri ? wikidataUri.split('/').pop() : null;
 
-            if (existingBook) {
-                if (curr.genre) {
-                    if (!existingBook.genres) {
-                        existingBook.genres = [];
+                if (!wikidataId) return acc; 
+
+                const existingBook = acc.get(wikidataId);
+
+                if (existingBook) {
+                    // Need to handle multiple genres
+                    const newGenre = binding.genreLabel?.value;
+                    if (newGenre && !existingBook.genres.includes(newGenre)) {
+                        existingBook.genres.push(newGenre);
                     }
-                    if (!existingBook.genres.includes(curr.genre)) {
-                        existingBook.genres.push(curr.genre);
+
+                    // Need to handle multiple authors and mention illustrators
+                    const newAuthor = binding.authorLabel?.value;
+                    if (newAuthor && !existingBook.author.includes(newAuthor)) {
+                        existingBook.author += `, ${newAuthor}`; 
                     }
+                } else {
+                    let publicationYear = null;
+                    if (binding.pubDate?.value) {
+                        const date = new Date(binding.pubDate.value);
+                        if (!isNaN(date.getTime())) {
+                            publicationYear = date.getFullYear();
+                        }
+                    }
+
+                    acc.set(wikidataId, {
+                        wikidataId,
+                        isbn: binding.isbn13?.value || binding.isbn10?.value || null,
+                        title: binding.bookLabel?.value,
+                        author: binding.authorLabel?.value || 'Unknown',
+                        location: binding.locationLabel?.value,
+                        coordinates: parseCoordinates(binding.coordinates?.value),
+                        genres: binding.genreLabel?.value ? [binding.genreLabel.value] : [],
+                        publicationYear
+                    });
                 }
-            } else {
-                const { genre, ...restOfBook } = curr;
-                
-                acc.push({
-                    ...restOfBook,
-                    genres: genre ? [genre] : []
-                });
-            }
 
-            return acc;
-        }, []);
+                return acc;
+            }, new Map<string, WikiDataDTO>()).values()
+        );
+        
     } catch (error) {
         console.error(`Error fetching books by location ${location}: ${error}`);
         throw error;
