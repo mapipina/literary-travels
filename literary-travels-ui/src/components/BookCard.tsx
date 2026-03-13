@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import type { default as Book, SavedBook } from "../types/Book";
-import { Badge, Button, Card, Group, Text, Box, Stack } from "@mantine/core";
-import { useSWRConfig } from "swr";
-import { saveBook, removeBook } from "../services/apiClient";
+import type { default as Book, BookMetadata, SavedBook } from "../types/Book";
+import { Badge, Button, Card, Group, Text, Box, Stack, Image, Skeleton } from "@mantine/core";
+import useSWR, { useSWRConfig } from "swr";
+import { saveBook, removeBook, fetcher } from "../services/apiClient";
 
 const shakeAnimation = `
   @keyframes shake {
@@ -24,6 +24,21 @@ type CardStatus = 'idle' | 'saving' | 'saved' | 'removing' | 'removed' | 'error'
 export const BookCard: React.FC<BookCardProps> = ({ book, isSavedView = false }) => {
     const { mutate } = useSWRConfig();
     const [status, setStatus] = useState<CardStatus>('idle');
+
+    const queryParams = new URLSearchParams();
+    if (book.isbn) queryParams.append('isbn', book.isbn);
+    if (book.title) queryParams.append('title', book.title);
+    if (book.author) queryParams.append('author', book.author);
+
+    const { data: metadata, isLoading: isMetadataLoading } = useSWR<BookMetadata>(
+        `/api/books/metadata?${queryParams.toString()}`,
+        fetcher,
+        {
+            revalidateOnFocus: false, // Avoiding a refetch since book covers don't change (only for movie releases ofc)
+            revalidateIfStale: false,
+            dedupingInterval: 86400000 // Cache locally for 24 hours
+        }
+    );
 
     useEffect(() => {
         if (status === 'error') {
@@ -71,6 +86,20 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isSavedView = false })
         <>
             <style>{shakeAnimation}</style>
             <Card style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <Card.Section>
+                    <Skeleton visible={isMetadataLoading} height={250} radius="none">
+                        <Image
+                            src={metadata?.coverUrl || 'https://placehold.co/400x600?text=No+Cover+Found'}
+                            height={250}
+                            alt={`Cover of ${book.title}`}
+                            fit="contain"
+                            fallbackSrc="https://placehold.co/400x600?text=No+Cover+Found"
+                            referrerPolicy="no-referrer"
+                            bg="gray.1"
+                            py="sm"
+                        />
+                    </Skeleton>
+                </Card.Section>
                 <Card.Section withBorder inheritPadding py="md">
                     <Stack gap={4}>
                         <Text fw={700} size="lg" lineClamp={1} c="indigo.9">
@@ -79,6 +108,11 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isSavedView = false })
                         <Text size="sm" c="dimmed" fw={500}>
                             by {book.author}
                         </Text>
+                        {metadata?.averageRating && (
+                            <Text size="sm" fw={700} c="yellow.8">
+                                ★ {metadata.averageRating} / 5
+                            </Text>
+                        )}
                     </Stack>
                 </Card.Section>
                 <Box py="md" style={{ flex: 1 }}>

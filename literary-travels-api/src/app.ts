@@ -184,7 +184,7 @@ app.get('/api/books/metadata', async (req: Request, res: Response) => {
     if (!metadata) {
       return res.status(404).json({ message: 'No metadata found for this book.' });
     }
-    return res.status(200).json(metadata);
+    return res.status(200).json({ data: metadata });
   } catch (e) {
     console.error(`Error occurred while attempting to use Google Books API: ${e}`);
     return res.status(500).json({ error: 'Failed to retrieve book metadata' });

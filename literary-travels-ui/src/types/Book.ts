@@ -13,3 +13,10 @@ export type SavedBook = Omit<Book, 'coordinates'> & {
     coordinates: { lat: number; lng: number };
     publicationYear: number;
 }
+
+export interface BookMetadata {
+    description: string | null;
+    coverUrl: string | null;
+    pageCount: number | null;
+    averageRating: number | null;
+}
