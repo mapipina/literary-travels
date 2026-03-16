@@ -55,7 +55,9 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isSavedView = false })
             const payload: SavedBook = {
                 ...book,
                 coordinates: book.coordinates,
-                publicationYear: book.publicationYear
+                publicationYear: book.publicationYear,
+                description: metadata?.description || undefined, 
+                coverUrl: metadata?.coverUrl || undefined,
             };
             await saveBook(payload);
             setStatus('saved');

@@ -12,6 +12,8 @@ export default interface Book {
 export type SavedBook = Omit<Book, 'coordinates'> & {
     coordinates: { lat: number; lng: number };
     publicationYear: number;
+    coverUrl?: string;
+    description?: string;
 }
 
 export interface BookMetadata {

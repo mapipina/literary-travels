@@ -101,7 +101,9 @@ app.post('/api/books', async (req: Request, res: Response) => {
       lat: book.coordinates.lat,
       lng: book.coordinates.lng,
       genres: book.genres || [],
-      publicationYear: book.publicationYear || null
+      publicationYear: book.publicationYear || null,
+      description: book.description || null,
+      coverUrl: book.coverUrl || null,
     });
 
     return res.status(201).json({
