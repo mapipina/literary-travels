@@ -12,6 +12,8 @@ class SavedBook extends Model<InferAttributes<SavedBook>, InferCreationAttribute
   declare publicationYear: number | null;
   declare wikidataId: string;
   declare isbn: string | null;
+  declare coverUrl: string | null;
+  declare description: string | null;
 }
 
 SavedBook.init({
@@ -56,6 +58,14 @@ SavedBook.init({
   isbn: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  coverUrl: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
   },
 }, {
   sequelize,
