@@ -112,22 +112,25 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isSavedView = false })
                             by {book.author}
                         </Text>
                         <Group gap='xl'>
-                            {metadata?.averageRating && (
+                            {metadata?.averageRating ? (
                                 <Text size="sm" fw={700} c="yellow.8">
                                     ★ {metadata.averageRating} / 5
                                 </Text>
-                            )}
-                            {(metadata?.description || book.description) && (
-                                <>
-                                <Anchor variant="gradient"
+                            ) : isMetadataLoading ? (
+                                <Skeleton height={20} width={60} radius="xl" />
+                            ) : null}
+                            {(metadata?.description || book.description) ? (
+                                <Anchor
+                                    variant="gradient"
                                     gradient={{ from: 'grape', to: 'pink' }}
-                                    onClick={open}>
+                                    onClick={open}
+                                >
                                     Read Summary
                                 </Anchor>
-                                </>
-                            )}
+                            ) : isMetadataLoading && !book.description ? (
+                                <Skeleton height={20} width={100} radius="xl" />
+                            ) : null}
                         </Group>
-
                     </Stack>
                 </Card.Section>
                 <Box py="md" style={{ flex: 1 }}>
@@ -180,10 +183,10 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isSavedView = false })
                     )}
                 </Card.Section>
             </Card>
-            <Modal 
-                opened={opened} 
-                onClose={close} 
-                title={book.title} 
+            <Modal
+                opened={opened}
+                onClose={close}
+                title={book.title}
                 size="lg"
             >
                 <Text size="sm" style={{ whiteSpace: 'pre-line' }} lh="1.6">
