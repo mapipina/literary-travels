@@ -4,6 +4,7 @@ import { getBooksByLocation } from './services/WikidataService';
 import SavedBook from './models/SavedBook';
 import sequelize from './config/database';
 import SearchCache from './models/SearchCache';
+import { getBookMetadata } from './services/GoogleBooksService';
 
 const app = express();
 app.use(cors());
@@ -100,7 +101,9 @@ app.post('/api/books', async (req: Request, res: Response) => {
       lat: book.coordinates.lat,
       lng: book.coordinates.lng,
       genres: book.genres || [],
-      publicationYear: book.publicationYear || null
+      publicationYear: book.publicationYear || null,
+      description: book.description || null,
+      coverUrl: book.coverUrl || null,
     });
 
     return res.status(201).json({
@@ -164,5 +167,30 @@ app.delete('/api/books/:wikidataId', async (req: Request, res: Response) => {
   }
 });
 
+app.get('/api/books/metadata', async (req: Request, res: Response) => {
+  try {
+    const { isbn, title, author } = req.query;
+
+    if (!isbn && (!title || !author)) {
+      return res.status(400).json({
+        error: 'Missing required query parameters: Provide either isbn, or title and author.'
+      });
+    }
+
+    const metadata = await getBookMetadata(
+      isbn as string,
+      title as string,
+      author as string
+    );
+
+    if (!metadata) {
+      return res.status(404).json({ message: 'No metadata found for this book.' });
+    }
+    return res.status(200).json({ data: metadata });
+  } catch (e) {
+    console.error(`Error occurred while attempting to use Google Books API: ${e}`);
+    return res.status(500).json({ error: 'Failed to retrieve book metadata' });
+  }
+});
 
 export default app; 

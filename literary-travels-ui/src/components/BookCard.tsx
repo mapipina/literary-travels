@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import type { default as Book, SavedBook } from "../types/Book";
-import { Badge, Button, Card, Group, Text, Box, Stack } from "@mantine/core";
-import { useSWRConfig } from "swr";
-import { saveBook, removeBook } from "../services/apiClient";
+import type { default as Book, BookMetadata, SavedBook } from "../types/Book";
+import { Badge, Button, Card, Group, Text, Box, Stack, Image, Skeleton, Anchor, Modal } from "@mantine/core";
+import useSWR, { useSWRConfig } from "swr";
+import { saveBook, removeBook, fetcher } from "../services/apiClient";
+import { useDisclosure } from "@mantine/hooks";
 
 const shakeAnimation = `
   @keyframes shake {
@@ -24,6 +25,22 @@ type CardStatus = 'idle' | 'saving' | 'saved' | 'removing' | 'removed' | 'error'
 export const BookCard: React.FC<BookCardProps> = ({ book, isSavedView = false }) => {
     const { mutate } = useSWRConfig();
     const [status, setStatus] = useState<CardStatus>('idle');
+    const [opened, { open, close }] = useDisclosure(false);
+
+    const queryParams = new URLSearchParams();
+    if (book.isbn) queryParams.append('isbn', book.isbn);
+    if (book.title) queryParams.append('title', book.title);
+    if (book.author) queryParams.append('author', book.author);
+
+    const { data: metadata, isLoading: isMetadataLoading } = useSWR<BookMetadata>(
+        `/api/books/metadata?${queryParams.toString()}`,
+        fetcher,
+        {
+            revalidateOnFocus: false, // Avoiding a refetch since book covers don't change (only for movie releases ofc)
+            revalidateIfStale: false,
+            dedupingInterval: 86400000 // Cache locally for 24 hours
+        }
+    );
 
     useEffect(() => {
         if (status === 'error') {
@@ -40,7 +57,9 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isSavedView = false })
             const payload: SavedBook = {
                 ...book,
                 coordinates: book.coordinates,
-                publicationYear: book.publicationYear
+                publicationYear: book.publicationYear,
+                description: metadata?.description || undefined,
+                coverUrl: metadata?.coverUrl || undefined,
             };
             await saveBook(payload);
             setStatus('saved');
@@ -71,6 +90,19 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isSavedView = false })
         <>
             <style>{shakeAnimation}</style>
             <Card style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <Card.Section>
+                    <Skeleton visible={isMetadataLoading} height={250} radius="none">
+                        <Image
+                            src={metadata?.coverUrl || book.coverUrl || 'https://placehold.co/400x600?text=No+Cover+Found'}
+                            height={250}
+                            alt={`Cover of ${book.title}`}
+                            fit="contain"
+                            referrerPolicy="no-referrer"
+                            bg="gray.1"
+                            py="sm"
+                        />
+                    </Skeleton>
+                </Card.Section>
                 <Card.Section withBorder inheritPadding py="md">
                     <Stack gap={4}>
                         <Text fw={700} size="lg" lineClamp={1} c="indigo.9">
@@ -79,6 +111,26 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isSavedView = false })
                         <Text size="sm" c="dimmed" fw={500}>
                             by {book.author}
                         </Text>
+                        <Group gap='xl'>
+                            {metadata?.averageRating ? (
+                                <Text size="sm" fw={700} c="yellow.8">
+                                    ★ {metadata.averageRating} / 5
+                                </Text>
+                            ) : isMetadataLoading ? (
+                                <Skeleton height={20} width={60} radius="xl" />
+                            ) : null}
+                            {(metadata?.description || book.description) ? (
+                                <Anchor
+                                    variant="gradient"
+                                    gradient={{ from: 'grape', to: 'pink' }}
+                                    onClick={open}
+                                >
+                                    Read Summary
+                                </Anchor>
+                            ) : isMetadataLoading && !book.description ? (
+                                <Skeleton height={20} width={100} radius="xl" />
+                            ) : null}
+                        </Group>
                     </Stack>
                 </Card.Section>
                 <Box py="md" style={{ flex: 1 }}>
@@ -103,7 +155,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isSavedView = false })
                         <Button
                             fullWidth
                             onClick={handleSave}
-                            loading={isActionLoading} // <-- Used here
+                            loading={isActionLoading}
                             disabled={isActionComplete}
                             color={status === 'error' ? 'red' : status === 'saved' ? 'teal' : 'indigo'}
                             style={{ animation: status === 'error' ? 'shake 0.4s ease-in-out' : 'none' }}
@@ -118,7 +170,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isSavedView = false })
                             fullWidth
                             variant="light"
                             onClick={handleRemove}
-                            loading={isActionLoading} // <-- And used here
+                            loading={isActionLoading}
                             disabled={isActionComplete}
                             color={status === 'error' ? 'red' : status === 'removed' ? 'gray' : 'red'}
                             style={{ animation: status === 'error' ? 'shake 0.4s ease-in-out' : 'none' }}
@@ -131,6 +183,16 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isSavedView = false })
                     )}
                 </Card.Section>
             </Card>
+            <Modal
+                opened={opened}
+                onClose={close}
+                title={book.title}
+                size="lg"
+            >
+                <Text size="sm" style={{ whiteSpace: 'pre-line' }} lh="1.6">
+                    {metadata?.description || book.description}
+                </Text>
+            </Modal>
         </>
     );
 };

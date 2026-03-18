@@ -1,17 +1,28 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MantineProvider } from '@mantine/core';
 import { BookGrid } from './BookGrid';
 import type Book from '../types/Book';
 
 vi.mock('swr', () => ({
-    useSWRConfig: () => ({ mutate: vi.fn() }),
+    default: vi.fn(() => ({ data: null, isLoading: false })),
+    useSWRConfig: vi.fn(() => ({ mutate: vi.fn() })),
+}));
+
+vi.mock('../services/apiClient', () => ({
+    saveBook: vi.fn(),
+    removeBook: vi.fn(),
+    fetcher: vi.fn()
 }));
 
 describe('BookGrid Component', () => {
     const renderWithMantine = (component: React.ReactNode) => {
         return render(<MantineProvider>{component}</MantineProvider>);
     };
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
 
     it('renders the empty state message when the books array is empty', () => {
         renderWithMantine(<BookGrid books={[]} />);
@@ -23,6 +34,8 @@ describe('BookGrid Component', () => {
     it('renders a grid of books with their titles and authors', () => {
         const mockBooks: Book[] = [
             {
+                wikidataId: 'Q1',
+                isbn: '9780593336585',
                 title: 'The Marlow Murder Club',
                 author: 'Robert Thorogood',
                 location: 'Marlow',
@@ -30,6 +43,8 @@ describe('BookGrid Component', () => {
                 publicationYear: null
             },
             {
+                wikidataId: 'Q2',
+                isbn: null,
                 title: 'Shakespeare and Hathaway',
                 author: 'Jude Tindall',
                 location: 'Stratford-upon-Avon',
@@ -49,6 +64,8 @@ describe('BookGrid Component', () => {
     it('conditionally renders genre and year badges only if the data exists', () => {
         const mockBooks: Book[] = [
             {
+                wikidataId: 'Q1',
+                isbn: '9780593336585',
                 title: 'The Marlow Murder Club',
                 author: 'Robert Thorogood',
                 location: 'Marlow',
@@ -56,6 +73,8 @@ describe('BookGrid Component', () => {
                 genres: ['Cozy Mystery']
             },
             {
+                wikidataId: 'Q2',
+                isbn: null,
                 title: 'Shakespeare and Hathaway',
                 author: 'Jude Tindall',
                 location: 'Stratford-upon-Avon',
