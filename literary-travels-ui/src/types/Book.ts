@@ -7,13 +7,13 @@ export default interface Book {
     coordinates?: { lat: number; lng: number };
     genres: string[];
     publicationYear: number | null;
+    description?: string | null;
+    coverUrl?: string | null; 
 }
 
-export type SavedBook = Omit<Book, 'coordinates'> & {
+export type SavedBook = Omit<Book, 'coordinates' | 'publicationYear'> & {
     coordinates: { lat: number; lng: number };
     publicationYear: number;
-    coverUrl?: string;
-    description?: string;
 }
 
 export interface BookMetadata {
