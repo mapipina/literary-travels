@@ -16,11 +16,33 @@ const goldIcon = new L.DivIcon({
     popupAnchor: [0, -36],
 });
 
-const MapUpdater = ({ center }: { center: [number, number] }) => {
+// const MapUpdater = ({ center }: { center: [number, number] }) => {
+//     const map = useMap();
+//     useEffect(() => {
+//         map.setView(center, map.getZoom());
+//     }, [center, map]);
+//     return null;
+// };
+
+const MapUpdater = ({ books }: { books: Book[] }) => {
     const map = useMap();
+
     useEffect(() => {
-        map.setView(center, map.getZoom());
-    }, [center, map]);
+        const validCoords = books.reduce<L.LatLng[]>((acc, curr) => {
+            if (curr.coordinates) {
+                acc.push(L.latLng(curr.coordinates.lat, curr.coordinates.lng))
+            }
+            return acc;
+        }, []);
+
+        if (validCoords.length > 0) {
+            const bounds = L.latLngBounds(validCoords);
+            map.fitBounds(bounds, { padding: [50, 50] });
+        } else {
+            map.setView([40.7128, -74.0060], 4);
+        }
+    }, [books, map]);
+
     return null;
 };
 
@@ -32,47 +54,47 @@ export const MapWrapper = ({ books }: MapWrapperProps) => {
     const groupedBooks = books.reduce((acc, book) => {
         if (!book.coordinates) return acc;
         const key = `${book.coordinates.lat},${book.coordinates.lng}`;
-        
+
         if (!acc[key]) {
             acc[key] = [];
         }
         acc[key].push(book);
-        
+
         return acc;
     }, {} as Record<string, Book[]>);
 
     const firstValidBook = books.find(b => b.coordinates);
-    const center: [number, number] = firstValidBook && firstValidBook.coordinates 
-        ? [firstValidBook.coordinates.lat, firstValidBook.coordinates.lng] 
+    const center: [number, number] = firstValidBook && firstValidBook.coordinates
+        ? [firstValidBook.coordinates.lat, firstValidBook.coordinates.lng]
         : [40.7128, -74.0060]; // Fallback to NYC
 
     return (
         <Box style={{ height: 400, width: '100%', borderRadius: 'var(--mantine-radius-md)', overflow: 'hidden' }}>
-            <MapContainer 
-                center={center} 
-                zoom={4} 
-                scrollWheelZoom={false} 
+            <MapContainer
+                center={center}
+                zoom={4}
+                scrollWheelZoom={false}
                 style={{ height: '100%', width: '100%' }}
             >
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                     url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                 />
-                <MapUpdater center={center} />
+                <MapUpdater books={books} />
                 {Object.entries(groupedBooks).map(([coordStr, locationBooks]) => {
                     const [lat, lng] = coordStr.split(',').map(Number);
-                    
+
                     return (
                         <Marker key={coordStr} position={[lat, lng]} icon={goldIcon}>
                             <Popup minWidth={220}>
                                 <ScrollArea h={locationBooks.length > 2 ? 180 : 'auto'} type="hover" offsetScrollbars>
                                     <Stack gap="xs" pr="sm">
                                         {locationBooks.map((book, index) => (
-                                            <Box 
-                                                key={`${book.title}-${index}`} 
+                                            <Box
+                                                key={`${book.title}-${index}`}
                                                 pb={index !== locationBooks.length - 1 ? "xs" : 0}
-                                                style={{ 
-                                                    borderBottom: index !== locationBooks.length - 1 ? '1px solid var(--mantine-color-gray-3)' : 'none' 
+                                                style={{
+                                                    borderBottom: index !== locationBooks.length - 1 ? '1px solid var(--mantine-color-gray-3)' : 'none'
                                                 }}
                                             >
                                                 <Text fw={700} size="sm" lh={1.2} mb={2}>
