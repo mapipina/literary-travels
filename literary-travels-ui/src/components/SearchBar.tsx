@@ -1,32 +1,94 @@
-import { useState } from 'react';
-import { TextInput, Box, Button, Group } from '@mantine/core';
+import { useState, useEffect } from 'react';
+import { Select, Button, Group, Box, Loader } from '@mantine/core';
+import { useDebouncedValue } from '@mantine/hooks';
+
+// We elevate the payload from a simple string to a strictly typed object
+export interface LocationData {
+    name: string;
+    wikidataId: string;
+    lat: number;
+    lng: number;
+}
 
 interface SearchBarProps {
-    onSubmit: (location: string) => void; // TODO: Make decision on supporting genre and format then update this
+    onSubmit: (location: LocationData) => void; 
     isLoading?: boolean;
 }
 
 export const SearchBar: React.FC<SearchBarProps> = ({ onSubmit, isLoading }) => {
     const [location, setLocation] = useState('');
+    const [debouncedSearch] = useDebouncedValue(location, 500); // 500ms delay
+    
+    const [places, setPlaces] = useState<LocationData[]>([]);
+    const [isFetching, setIsFetching] = useState(false);
+    const [selectedValue, setSelectedValue] = useState<string | null>(null);
 
-    const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+    useEffect(() => {
+        if (debouncedSearch.trim().length < 3) {
+            setPlaces([]);
+            return;
+        }
+
+        const fetchPlaces = async () => {
+            setIsFetching(true);
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(debouncedSearch)}&format=jsonv2&extratags=1&limit=5`
+                );
+                const data = await response.json();
+                const validPlaces: LocationData[] = data
+                    .filter((item: any) => item.extratags && item.extratags.wikidata)
+                    .map((item: any) => ({
+                        name: item.display_name,
+                        wikidataId: item.extratags.wikidata,
+                        lat: parseFloat(item.lat),
+                        lng: parseFloat(item.lon)
+                    }));
+
+                setPlaces(validPlaces);
+            } catch (error) {
+                console.error('Error fetching locations from Nominatim:', error);
+            } finally {
+                setIsFetching(false);
+            }
+        };
+
+        fetchPlaces();
+    }, [debouncedSearch]);
+
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault(); 
         
-        if (location.trim()) {
-            onSubmit(location.trim());
+        // Find the full location object based on the selected Q-ID
+        const selectedPlace = places.find(p => p.wikidataId === selectedValue);
+        if (selectedPlace) {
+            onSubmit(selectedPlace);
         }
     };
+
+    // Format the data for Mantine's Select component
+    const selectData = places.map(place => ({
+        value: place.wikidataId, // We use the Q-ID as the underlying value
+        label: place.name        // The user sees the full display name
+    }));
 
     return (
         <form onSubmit={handleSubmit}>
             <Box>
-                <TextInput
+                <Select
                     label="Where are you traveling?"
-                    placeholder="e.g., London, Paris..."
-                    value={location}
-                    onChange={(e) => setLocation(e.currentTarget.value)}
+                    placeholder="Search for a city..."
+                    data={selectData}
+                    searchable
+                    searchValue={location}
+                    onSearchChange={setLocation}
+                    value={selectedValue}
+                    onChange={setSelectedValue}
+                    rightSection={isFetching ? <Loader size="xs" /> : null}
+                    nothingFoundMessage={isFetching ? "Searching..." : "No locations found"}
+                    filter={({ options }) => options} // Disables internal filtering so the API drives the results
+                    size="md"
                     required
-                    data-autofocus
                 />
             </Box>
             <Group justify="flex-end" mt="xl">
@@ -34,7 +96,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSubmit, isLoading }) => 
                     type="submit" 
                     size="md" 
                     loading={isLoading}
-                    disabled={!location.trim()}
+                    disabled={!selectedValue}
                 >
                     Books, yay!
                 </Button>

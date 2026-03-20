@@ -31,23 +31,18 @@ const parseCoordinates = (pointString?: string): { lat: number, lng: number } | 
     return undefined;
 };
 
-export const getWikiData = async (location: string): Promise<WikidataRawResponse> => {
+export const getWikiData = async (wikidataId: string): Promise<WikidataRawResponse> => {
     const sparqlQuery = `
-        SELECT ?book ?bookLabel ?authorLabel ?locationLabel ?coordinates ?genreLabel ?pubDate ?isbn13 ?isbn10 WHERE {
-        ?book wdt:P31/wdt:P279* wd:Q7725634. # instance of literary work
-        ?book wdt:P840 ?location.            # narrative location
-        ?location wdt:P625 ?coordinates.     
-        
-        # Filter by the user's search term (case-insensitive)
-        ?location rdfs:label ?locName.
-        FILTER(LANG(?locName) = "en")
-        FILTER(CONTAINS(LCASE(?locName), LCASE("${location}")))
+        SELECT ?book ?bookLabel ?authorLabel ?coordinates ?genreLabel ?pubDate ?isbn13 ?isbn10 WHERE {
+        ?book wdt:P31/wdt:P279* wd:Q7725634.
+        ?book wdt:P840 wd:${wikidataId}.
+        OPTIONAL { wd:${wikidataId} wdt:P625 ?coordinates. }
 
         OPTIONAL { ?book wdt:P50 ?author. } 
         OPTIONAL { ?book wdt:P136 ?genre. }
         OPTIONAL { ?book wdt:P577 ?pubDate. }
-        OPTIONAL { ?book wdt:P212 ?isbn13. } # ISBN-13
-        OPTIONAL { ?book wdt:P957 ?isbn10. } # ISBN-10
+        OPTIONAL { ?book wdt:P212 ?isbn13. }
+        OPTIONAL { ?book wdt:P957 ?isbn10. }
         
         SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
         }
@@ -64,27 +59,26 @@ export const getWikiData = async (location: string): Promise<WikidataRawResponse
     return response.data;
 }
 
-export const getBooksByLocation = async (location: string): Promise<WikiDataDTO[]> => {
+export const getBooksByLocation = async (wikidataId: string, locationName: string): Promise<WikiDataDTO[]> => {
     try {
-        const data = await getWikiData(location);
+        const data = await getWikiData(wikidataId);
 
         return Array.from(
             data.results.bindings.reduce((acc: Map<string, WikiDataDTO>, binding: any) => {
                 const wikidataUri = binding.book?.value;
-                const wikidataId = wikidataUri ? wikidataUri.split('/').pop() : null;
+                const bookId = wikidataUri ? wikidataUri.split('/').pop() : null;
+                const title = binding.bookLabel?.value;
+                // Regex helps remove books with wikidata id. Filtering thru the noise of books with little info
+                if (!bookId || !title || /^Q\d+$/.test(title)) return acc;  
 
-                if (!wikidataId) return acc; 
-
-                const existingBook = acc.get(wikidataId);
+                const existingBook = acc.get(bookId);
 
                 if (existingBook) {
-                    // Need to handle multiple genres
                     const newGenre = binding.genreLabel?.value;
                     if (newGenre && !existingBook.genres.includes(newGenre)) {
                         existingBook.genres.push(newGenre);
                     }
 
-                    // Need to handle multiple authors and mention illustrators
                     const newAuthor = binding.authorLabel?.value;
                     if (newAuthor && !existingBook.author.includes(newAuthor)) {
                         existingBook.author += `, ${newAuthor}`; 
@@ -98,12 +92,12 @@ export const getBooksByLocation = async (location: string): Promise<WikiDataDTO[
                         }
                     }
 
-                    acc.set(wikidataId, {
-                        wikidataId,
+                    acc.set(bookId, {
+                        wikidataId: bookId,
                         isbn: binding.isbn13?.value || binding.isbn10?.value || null,
-                        title: binding.bookLabel?.value,
+                        title: title,
                         author: binding.authorLabel?.value || 'Unknown',
-                        location: binding.locationLabel?.value,
+                        location: locationName, 
                         coordinates: parseCoordinates(binding.coordinates?.value),
                         genres: binding.genreLabel?.value ? [binding.genreLabel.value] : [],
                         publicationYear
@@ -115,7 +109,7 @@ export const getBooksByLocation = async (location: string): Promise<WikiDataDTO[
         );
         
     } catch (error) {
-        console.error(`Error fetching books by location ${location}: ${error}`);
+        console.error(`Error fetching books by location ${wikidataId}: ${error}`);
         throw error;
     }
 };

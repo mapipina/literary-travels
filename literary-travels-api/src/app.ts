@@ -31,38 +31,41 @@ app.get('/api/health', async (_req: Request, res: Response) => {
 
 app.get('/api/search', async (req: Request, res: Response) => {
   try {
-    const location = req.query.query as string;
-    if (!location) {
-      return res.status(400).json({ error: 'Location param is required.' });
+    const wikidataId = req.query.wikidataId as string;
+    const name = req.query.name as string;
+
+    if (!wikidataId || !name) {
+      return res.status(400).json({ error: 'Both wikidataId and name parameters are required.' });
     }
 
-    const normalizedLocation = location.toLowerCase().trim();
     const cachedSearch = await SearchCache.findOne({
-      where: { location: normalizedLocation }
+      where: { location: wikidataId } 
     });
 
     if (cachedSearch && new Date() < cachedSearch.expiresAt) {
-      console.log(`Cache HIT for location: ${normalizedLocation}`);
+      console.log(`Cache HIT for wikidataId: ${wikidataId}`);
       return res.status(200).json({
-        message: `Found cached books for ${location}`,
+        message: `Found cached books for ${name}`,
         data: cachedSearch.data
       });
     }
 
-    console.log(`Cache MISS for location: ${normalizedLocation}. Fetching from Wikidata...`);
+    console.log(`Cache MISS for wikidataId: ${wikidataId}. Fetching from Wikidata...`);
 
-    const books = await getBooksByLocation(location);
+    const books = await getBooksByLocation(wikidataId, name);
+    
     if (books.length > 0) {
       const expirationDate = new Date();
-      expirationDate.setHours(expirationDate.getHours() + 24); // Cache for 24 hours
+      expirationDate.setHours(expirationDate.getHours() + 24);
 
       await SearchCache.upsert({
-        location: normalizedLocation,
+        location: wikidataId, 
         data: books,
         expiresAt: expirationDate
       });
     }
-    const successMsg = books.length > 0 ? `Found matched books for ${location}` : `No books found based in ${location}`;
+    
+    const successMsg = books.length > 0 ? `Found matched books for ${name}` : `No books found based in ${name}`;
     return res.status(200).json({ message: successMsg, data: books });
   } catch (e) {
     console.error(`Error occurred retrieving data from Wikidata: ${e}`);
