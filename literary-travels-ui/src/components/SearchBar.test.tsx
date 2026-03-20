@@ -16,7 +16,7 @@ describe('SearchBar Component', () => {
     expect(button).toBeDisabled();
   });
 
-  it('enables the button when inputs are filled and calls onSubmit', async () => {
+  it('enables the button when input is filled and calls onSubmit via click', async () => {
     const user = userEvent.setup(); 
     const mockSubmit = vi.fn();
     
@@ -28,22 +28,22 @@ describe('SearchBar Component', () => {
     const locationInput = screen.getByPlaceholderText('e.g., London, Paris...');
     await user.type(locationInput, 'Tokyo');
 
-    const genreInput = screen.getByPlaceholderText('Select genre');
-    await user.click(genreInput);
-    const mysteryOption = await screen.findByText('Mystery');
-    // const mysteryOption = await screen.findByRole('option', { name: 'Mystery' });
-    await user.click(mysteryOption);
-
-    const formatInput = screen.getByPlaceholderText('Select format');
-    await user.click(formatInput);
-    const paperbackOption = await screen.findByText('Paperback');
-    // const paperbackOption = await screen.findByRole('option', { name: 'Paperback' });
-    await user.click(paperbackOption);
-
     expect(button).not.toBeDisabled();
     await user.click(button);
 
     expect(mockSubmit).toHaveBeenCalledWith('Tokyo');
+  });
+
+  it('calls onSubmit when the Enter key is pressed', async () => {
+    const user = userEvent.setup(); 
+    const mockSubmit = vi.fn();
+    
+    renderWithMantine(<SearchBar onSubmit={mockSubmit} isLoading={false} />);
+    
+    const locationInput = screen.getByPlaceholderText('e.g., London, Paris...');
+    
+    await user.type(locationInput, 'Kyoto{enter}');
+    expect(mockSubmit).toHaveBeenCalledWith('Kyoto');
   });
 
   it('disables the submit button when isLoading is true', () => {
