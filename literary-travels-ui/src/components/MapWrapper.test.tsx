@@ -4,6 +4,14 @@ import { MantineProvider } from '@mantine/core';
 import { MapWrapper } from './MapWrapper';
 import type Book from '../types/Book';
 
+vi.mock('swr', () => ({
+    useSWRConfig: vi.fn(() => ({ mutate: vi.fn() })),
+}));
+
+vi.mock('../services/apiClient', () => ({
+    removeBook: vi.fn(),
+}));
+
 vi.mock('react-leaflet', () => {
     return {
         MapContainer: ({ children, center }: any) => (
@@ -20,6 +28,7 @@ vi.mock('react-leaflet', () => {
         Popup: ({ children }: any) => <div data-testid="map-popup">{children}</div>,
         useMap: () => ({
             setView: vi.fn(),
+            fitBounds: vi.fn(),
             getZoom: vi.fn().mockReturnValue(4)
         })
     };
@@ -28,7 +37,9 @@ vi.mock('react-leaflet', () => {
 vi.mock('leaflet', () => {
     return {
         default: {
-            DivIcon: class {} 
+            DivIcon: class {},
+            latLng: vi.fn((lat, lng) => ({ lat, lng })),
+            latLngBounds: vi.fn((coords) => coords) 
         }
     };
 });
@@ -40,6 +51,8 @@ describe('MapWrapper Component', () => {
 
     const mockBooks: Book[] = [
         {
+            wikidataId: 'Q1', 
+            isbn: null,
             title: 'Midnight in Paris',
             author: 'Jane Doe',
             location: 'Paris',
@@ -48,6 +61,8 @@ describe('MapWrapper Component', () => {
             publicationYear: null
         },
         {
+            wikidataId: 'Q2',
+            isbn: null,
             title: 'London Calling',
             author: 'John Smith',
             location: 'London',
@@ -56,6 +71,8 @@ describe('MapWrapper Component', () => {
             publicationYear: null
         },
         {
+            wikidataId: 'Q3',
+            isbn: null,
             title: 'Lost in the Void',
             author: 'Ghost Writer',
             location: 'Unknown',
@@ -63,6 +80,8 @@ describe('MapWrapper Component', () => {
             publicationYear: null
         },
         {
+            wikidataId: 'Q4',
+            isbn: null,
             title: 'Another Day in Paris',
             author: 'Jane Doe',
             location: 'Paris',
@@ -71,7 +90,6 @@ describe('MapWrapper Component', () => {
             publicationYear: null
         }
     ];
-
     it('renders the base map container and tile layer', () => {
         renderWithMantine(<MapWrapper books={[]} />);
         
