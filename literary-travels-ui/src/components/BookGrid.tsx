@@ -23,9 +23,9 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isSavedView }) => {
             verticalSpacing="xl"
             mt="xl"
         >
-            {books.map(book => (
+            {books.map((book, i) => (
                 <BookCard
-                    key={book.wikidataId}
+                    key={book.wikidataId || `fallback-key-${i}`}
                     book={book}
                     isSavedView={isSavedView}
                 />

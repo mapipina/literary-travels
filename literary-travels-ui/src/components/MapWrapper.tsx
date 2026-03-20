@@ -1,6 +1,8 @@
-import { useEffect } from 'react';
+import { useState, useEffect, type JSX } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { Box, Text, Stack, ScrollArea } from '@mantine/core';
+import { Box, Text, Stack, ScrollArea, Group, Image, Button } from '@mantine/core';
+import { useSWRConfig } from 'swr'; 
+import { removeBook } from '../services/apiClient';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type Book from '../types/Book';
@@ -15,14 +17,6 @@ const goldIcon = new L.DivIcon({
     iconAnchor: [12, 36],
     popupAnchor: [0, -36],
 });
-
-// const MapUpdater = ({ center }: { center: [number, number] }) => {
-//     const map = useMap();
-//     useEffect(() => {
-//         map.setView(center, map.getZoom());
-//     }, [center, map]);
-//     return null;
-// };
 
 const MapUpdater = ({ books }: { books: Book[] }) => {
     const map = useMap();
@@ -44,6 +38,63 @@ const MapUpdater = ({ books }: { books: Book[] }) => {
     }, [books, map]);
 
     return null;
+};
+
+const PopupBookItem = ({ book, isLast }: { book: Book, isLast: boolean }): JSX.Element => {
+    const [status, setStatus] = useState<'idle' | 'removing' | 'error'>('idle');
+    const { mutate } = useSWRConfig();
+
+    const handleRemove = async () => {
+        if (!book.wikidataId) {
+            console.error("Cannot remove: This book is missing a wikidataId.");
+            setStatus('error');
+            return;
+        }
+
+        setStatus('removing');
+        try {
+            await removeBook(book.wikidataId);
+            mutate('/api/books');
+        } catch (error) {
+            console.error(error);
+            setStatus('error');
+        }
+    };
+
+    return (
+        <Group
+            wrap="nowrap"
+            align="flex-start"
+            pb={!isLast ? "sm" : 0}
+            style={{ borderBottom: !isLast ? '1px solid var(--mantine-color-gray-3)' : 'none' }}
+        >
+            <Image
+                src={book.coverUrl || 'https://placehold.co/100x150?text=No+Cover'}
+                w={45}
+                h={70}
+                radius="sm"
+                fallbackSrc="https://placehold.co/100x150?text=No+Cover"
+            />
+            <Stack gap={0} style={{ flex: 1 }}>
+                <Text fw={700} size="sm" lh={1.2} mb={4} lineClamp={2}>
+                    {book.title}
+                </Text>
+                <Text size="xs" c="dimmed" mb={8}>
+                    by {book.author}
+                </Text>
+                <Button
+                    size="compact-xs"
+                    color={status === 'error' ? 'red' : 'gray'}
+                    variant="light"
+                    onClick={handleRemove}
+                    loading={status === 'removing'}
+                    style={{ alignSelf: 'flex-start' }}
+                >
+                    {status === 'error' ? 'Error - Retry' : 'Remove'}
+                </Button>
+            </Stack>
+        </Group>
+    );
 };
 
 interface MapWrapperProps {
@@ -86,25 +137,17 @@ export const MapWrapper = ({ books }: MapWrapperProps) => {
 
                     return (
                         <Marker key={coordStr} position={[lat, lng]} icon={goldIcon}>
-                            <Popup minWidth={220}>
-                                <ScrollArea h={locationBooks.length > 2 ? 180 : 'auto'} type="hover" offsetScrollbars>
-                                    <Stack gap="xs" pr="sm">
+                            <Popup minWidth={260}>
+                                <ScrollArea h={locationBooks.length > 2 ? 220 : 'auto'} type="hover" offsetScrollbars>
+                                    <Stack gap="sm" pr="sm">
                                         {locationBooks.map((book, index) => (
-                                            <Box
-                                                key={`${book.title}-${index}`}
-                                                pb={index !== locationBooks.length - 1 ? "xs" : 0}
-                                                style={{
-                                                    borderBottom: index !== locationBooks.length - 1 ? '1px solid var(--mantine-color-gray-3)' : 'none'
-                                                }}
-                                            >
-                                                <Text fw={700} size="sm" lh={1.2} mb={2}>
-                                                    {book.title}
-                                                </Text>
-                                                <Text size="xs" c="dimmed">
-                                                    by {book.author}
-                                                </Text>
-                                            </Box>
+                                            <PopupBookItem
+                                                key={book.wikidataId || `popup-${book.title}-${index}`}
+                                                book={book}
+                                                isLast={index === locationBooks.length - 1}
+                                            />
                                         ))}
+
                                     </Stack>
                                 </ScrollArea>
                             </Popup>
