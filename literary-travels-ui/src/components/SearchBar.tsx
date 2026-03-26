@@ -59,17 +59,15 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSubmit, isLoading }) => 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault(); 
         
-        // Find the full location object based on the selected Q-ID
         const selectedPlace = places.find(p => p.wikidataId === selectedValue);
         if (selectedPlace) {
             onSubmit(selectedPlace);
         }
     };
 
-    // Format the data for Mantine's Select component
     const selectData = places.map(place => ({
-        value: place.wikidataId, // We use the Q-ID as the underlying value
-        label: place.name        // The user sees the full display name
+        value: place.wikidataId, 
+        label: place.name
     }));
 
     return (
@@ -86,7 +84,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSubmit, isLoading }) => 
                     onChange={setSelectedValue}
                     rightSection={isFetching ? <Loader size="xs" /> : null}
                     nothingFoundMessage={isFetching ? "Searching..." : "No locations found"}
-                    filter={({ options }) => options} // Disables internal filtering so the API drives the results
+                    filter={({ options }) => options} 
                     size="md"
                     required
                 />
