@@ -8,8 +8,8 @@ export interface BookMetadataDTO {
 }
 
 export const getBookMetadata = async (
-    isbn?: string | null, 
-    title?: string, 
+    isbn?: string | null,
+    title?: string,
     author?: string
 ): Promise<BookMetadataDTO | null> => {
     try {
@@ -17,13 +17,17 @@ export const getBookMetadata = async (
 
         if (isbn) {
             query = `isbn:${isbn}`;
-        } else if (title && author) {
-            query = `intitle:"${title}"+inauthor:"${author}"`;
+        } else if (title) {
+            query = `intitle:"${title}"`;
+            if (author && author !== 'Unknown') {
+                query += `+inauthor:"${author}"`;
+            }
         } else {
             throw new Error('Must provide either an ISBN or Title/Author pair for metadata search.');
         }
 
-        const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=1`;
+        const apiKey = process.env.GOOGLE_BOOKS_API_KEY;
+        const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=1${apiKey ? `&key=${apiKey}` : ''}`;
         const response = await axios.get(url);
 
         if (!response.data.items || response.data.items.length === 0) {

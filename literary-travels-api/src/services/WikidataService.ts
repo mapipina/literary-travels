@@ -69,7 +69,7 @@ export const getBooksByLocation = async (wikidataId: string, locationName: strin
                 const bookId = wikidataUri ? wikidataUri.split('/').pop() : null;
                 const title = binding.bookLabel?.value;
                 // Regex helps remove books with wikidata id. Filtering thru the noise of books with little info
-                if (!bookId || !title || /^Q\d+$/.test(title)) return acc;  
+                if (!bookId || !title || /^Q\d+$/.test(title)) return acc;
 
                 const existingBook = acc.get(bookId);
 
@@ -80,8 +80,8 @@ export const getBooksByLocation = async (wikidataId: string, locationName: strin
                     }
 
                     const newAuthor = binding.authorLabel?.value;
-                    if (newAuthor && !existingBook.author.includes(newAuthor)) {
-                        existingBook.author += `, ${newAuthor}`; 
+                    if (newAuthor && !existingBook.author.includes(newAuthor) && !/^Q\d+$/.test(newAuthor)) {
+                        existingBook.author = existingBook.author === 'Unknown' ? newAuthor : `${existingBook.author}, ${newAuthor}`;
                     }
                 } else {
                     let publicationYear = null;
@@ -92,12 +92,15 @@ export const getBooksByLocation = async (wikidataId: string, locationName: strin
                         }
                     }
 
+                    const rawAuthor = binding.authorLabel?.value;
+                    const cleanAuthor = (rawAuthor && !/^Q\d+$/.test(rawAuthor)) ? rawAuthor : 'Unknown';
+
                     acc.set(bookId, {
                         wikidataId: bookId,
                         isbn: binding.isbn13?.value || binding.isbn10?.value || null,
                         title: title,
-                        author: binding.authorLabel?.value || 'Unknown',
-                        location: locationName, 
+                        author: cleanAuthor,
+                        location: locationName,
                         coordinates: parseCoordinates(binding.coordinates?.value),
                         genres: binding.genreLabel?.value ? [binding.genreLabel.value] : [],
                         publicationYear
@@ -107,7 +110,7 @@ export const getBooksByLocation = async (wikidataId: string, locationName: strin
                 return acc;
             }, new Map<string, WikiDataDTO>()).values()
         );
-        
+
     } catch (error) {
         console.error(`Error fetching books by location ${wikidataId}: ${error}`);
         throw error;

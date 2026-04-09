@@ -16,6 +16,17 @@ vi.mock('swr', () => ({
     useSWRConfig: vi.fn(() => ({ mutate: vi.fn() })),
 }));
 
+vi.mock('@mantine/hooks', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@mantine/hooks')>();
+    return {
+        ...actual,
+        useIntersection: () => ({
+            ref: vi.fn(),
+            entry: { isIntersecting: true }
+        })
+    };
+});
+
 const mockBook = {
     wikidataId: 'Q12345',
     isbn: '9781234567890',

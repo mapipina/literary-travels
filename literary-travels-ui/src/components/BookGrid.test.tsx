@@ -15,6 +15,17 @@ vi.mock('../services/apiClient', () => ({
     fetcher: vi.fn()
 }));
 
+vi.mock('@mantine/hooks', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@mantine/hooks')>();
+    return {
+        ...actual,
+        useIntersection: () => ({
+            ref: vi.fn(),
+            entry: { isIntersecting: true }
+        })
+    };
+});
+
 describe('BookGrid Component', () => {
     const renderWithMantine = (component: React.ReactNode) => {
         return render(<MantineProvider>{component}</MantineProvider>);
