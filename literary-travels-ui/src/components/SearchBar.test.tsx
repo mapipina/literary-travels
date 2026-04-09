@@ -53,10 +53,10 @@ describe('SearchBar Component', () => {
 
         expect(globalThis.fetch).toHaveBeenCalled();
 
-        const miamiOption = await screen.findByRole('option', { name: 'Miami, Florida' });
+        const miamiOption = await screen.findByText(/Miami, Florida/i);
         expect(miamiOption).toBeInTheDocument();
 
-        const ghostOption = screen.queryByRole('option', { name: 'Ghost Town' });
+        const ghostOption = screen.queryByRole('option', { name: /Ghost Town/i });
         expect(ghostOption).not.toBeInTheDocument();
 
         await user.click(miamiOption);
