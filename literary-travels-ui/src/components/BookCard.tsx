@@ -3,7 +3,7 @@ import type { default as Book, BookMetadata, SavedBook } from "../types/Book";
 import { Badge, Button, Card, Group, Text, Box, Stack, Image, Skeleton, Anchor, Modal } from "@mantine/core";
 import useSWR, { useSWRConfig } from "swr";
 import { saveBook, removeBook, fetcher } from "../services/apiClient";
-import { useDisclosure } from "@mantine/hooks";
+import { useDisclosure, useIntersection } from "@mantine/hooks";
 
 const shakeAnimation = `
   @keyframes shake {
@@ -27,13 +27,27 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isSavedView = false })
     const [status, setStatus] = useState<CardStatus>('idle');
     const [opened, { open, close }] = useDisclosure(false);
 
+    const { ref, entry } = useIntersection({
+        root: null,
+        threshold: 0.1, // adding this for when 10% of card is visible to limit Google API calls
+    });
+
+    const [hasIntersected, setHasIntersected] = useState(false)
+    useEffect(() => {
+        if (entry?.isIntersecting && !hasIntersected) setHasIntersected(true);
+    }, [entry?.isIntersecting, hasIntersected])
+
     const queryParams = new URLSearchParams();
     if (book.isbn) queryParams.append('isbn', book.isbn);
     if (book.title) queryParams.append('title', book.title);
     if (book.author) queryParams.append('author', book.author);
 
+    const fetchKey = hasIntersected 
+    ? `/api/books/metadata?${queryParams.toString()}`
+    : null;
+
     const { data: metadata, isLoading: isMetadataLoading } = useSWR<BookMetadata>(
-        `/api/books/metadata?${queryParams.toString()}`,
+        fetchKey,
         fetcher,
         {
             revalidateOnFocus: false, // Avoiding a refetch since book covers don't change (only for movie releases ofc)
@@ -89,9 +103,9 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isSavedView = false })
     return (
         <>
             <style>{shakeAnimation}</style>
-            <Card style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <Card ref={ref} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                 <Card.Section>
-                    <Skeleton visible={isMetadataLoading} height={250} radius="none">
+                    <Skeleton visible={isMetadataLoading && hasIntersected} height={250} radius="none">
                         <Image
                             src={metadata?.coverUrl || book.coverUrl || 'https://placehold.co/400x600?text=No+Cover+Found'}
                             height={250}
