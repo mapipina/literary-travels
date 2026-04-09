@@ -72,7 +72,7 @@ describe('WikidataService - getBooksByLocation', () => {
     it('successfully maps a complete Wikidata response', async () => {
         vi.mocked(axios.get).mockResolvedValueOnce({ data: createMockResponse(standardBookBindings) });
 
-        const result = await getBooksByLocation('Marlow');
+        const result = await getBooksByLocation('Q104870535', 'Marlow');
 
         expect(result).toHaveLength(1);
         expect(result[0]).toEqual({
@@ -90,7 +90,7 @@ describe('WikidataService - getBooksByLocation', () => {
     it('safely handles missing optional fields like genre, date, isbn, and coordinates', async () => {
         vi.mocked(axios.get).mockResolvedValueOnce({ data: createMockResponse(incompleteBookBindings) });
 
-        const result = await getBooksByLocation('London');
+        const result = await getBooksByLocation('Q99999', 'London');
 
         expect(result[0]).toEqual({
             wikidataId: 'Q99999',
@@ -107,7 +107,7 @@ describe('WikidataService - getBooksByLocation', () => {
     it('deduplicates books by wikidataId and merges multiple genres into an array', async () => {
         vi.mocked(axios.get).mockResolvedValueOnce({ data: createMockResponse(duplicateGenreBindings) });
 
-        const result = await getBooksByLocation('Los Angeles');
+        const result = await getBooksByLocation('Q1080000', 'Los Angeles');
 
         expect(result).toHaveLength(1); 
         expect(result[0]).toEqual({
@@ -125,7 +125,7 @@ describe('WikidataService - getBooksByLocation', () => {
     it('concatenates authors and illustrators when multiple creators share the same wikidataId', async () => {
         vi.mocked(axios.get).mockResolvedValueOnce({ data: createMockResponse(multipleAuthorBindings) });
 
-        const result = await getBooksByLocation('Germany');
+        const result = await getBooksByLocation('Q4093', 'Germany');
 
         expect(result).toHaveLength(1); 
         expect(result[0].author).toBe('Karl Marx, Friedrich Engels');
@@ -134,6 +134,6 @@ describe('WikidataService - getBooksByLocation', () => {
     it('throws an error if the Axios request fails', async () => {
         vi.mocked(axios.get).mockRejectedValueOnce(new Error('Network Error'));
 
-        await expect(getBooksByLocation('London')).rejects.toThrow('Network Error');
+        await expect(getBooksByLocation('Q99999', 'London')).rejects.toThrow('Network Error');
     });
 });

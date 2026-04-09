@@ -72,7 +72,7 @@ describe('API Routes', () => {
             expiresAt: futureDate
         } as any);
 
-        const response = await request(app).get('/api/search?query=Paris');
+        const response = await request(app).get('/api/search?wikidataId=Q90&name=Paris');
         
         expect(response.status).toBe(200);
         expect(response.body.message).toBe('Found cached books for Paris');
@@ -84,11 +84,11 @@ describe('API Routes', () => {
         const mockApiData = [{ title: 'API Book', author: 'API Author' }];
         mockedGetBooks.mockResolvedValueOnce(mockApiData as any);
 
-        const response = await request(app).get('/api/search?query=London');
+        const response = await request(app).get('/api/search?wikidataId=Q84&name=London');
         
         expect(response.status).toBe(200);
         expect(response.body.data).toEqual(mockApiData);
-        expect(mockedGetBooks).toHaveBeenCalledWith('London');
+        expect(mockedGetBooks).toHaveBeenCalledWith('Q84', 'London');
         expect(SearchCache.upsert).toHaveBeenCalled();
     });
   });

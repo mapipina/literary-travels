@@ -1,20 +1,23 @@
 import { useState } from 'react';
 import useSWR from 'swr';
 import { Container, Text, Title, Box, Paper, Stack, rem } from '@mantine/core';
-import { SearchBar } from '../components/SearchBar';
+import { SearchBar, type LocationData } from '../components/SearchBar';
 import { BookGrid } from '../components/BookGrid';
 import { MapWrapper } from '../components/MapWrapper';
 import { fetcher } from '../services/apiClient';
 
 export const SearchPage = () => {
-  const [searchQuery, setSearchQuery] = useState<string | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
+
   const { data: books, error, isLoading } = useSWR(
-    searchQuery ? `/api/search?query=${searchQuery}` : null,
+    selectedLocation 
+      ? `/api/search?wikidataId=${selectedLocation.wikidataId}&name=${encodeURIComponent(selectedLocation.name)}` 
+      : null,
     fetcher
   );
 
-  const handleSearch = (location: string) => {
-    setSearchQuery(location);
+  const handleSearch = (location: LocationData) => {
+    setSelectedLocation(location);
   };
 
   return (
@@ -48,7 +51,7 @@ export const SearchPage = () => {
               Whoops! Something went wrong. Check console for more details. 
             </Text>
           )}
-          {searchQuery && !isLoading && books && (
+          {selectedLocation && !isLoading && books && (
             <>
               {books.length > 0 && (
                 <Paper shadow="md" style={{ overflow: 'hidden' }}>
