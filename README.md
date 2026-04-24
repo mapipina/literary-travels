@@ -1,36 +1,84 @@
 # Literary Travels
-Embark on a literary journey by searching for books inspired by your travels.
+Embark on a literary journey by searching for books inspired by your travel destinations. 
 
-## Updated Vision
-Using Wikidata to help users with their search. This project will involve a user portal in which users can
+![Literary Travels Homepage Results View](./docs/literary-travels-demo.gif)
 
-1. Conduct search for books based on upcoming trip
-2. "Pin" book to location (will start with US for easy map viz setup and catering to first tier audience)
-3. Data Tables will display
-    - Book Title, Country, Aggregated Rating, User Rating
-4. I'm mulling through a GoodReads / alternative type of experience where they can store reviews for books as well as their rating. (Using Wikidata for books, still need to collect aggregated review data)
-5. Thinking through a UI for logged in users to share a peek of their current literary travel reading "project" to peers, as READ-ONLY
+## Features
+By combining geographical data with literary databases, Literary Travels offers a unique way to curate your vacation reading lists:
 
-## Phases
-**Phase 1: Core Search Pipeline (Completed)**
-* Set up the full-stack foundation with a Node.js Express backend and a React frontend.
-* Integrated Wikidata via SPARQL queries to fetch specific book metadata (Title, Author, Genre, Year, and WKT Coordinates) based on global travel destinations.
-* Built out a responsive UI using Mantine components, including dynamic search inputs and a robust results grid.
-* Established comprehensive unit and integration testing pipelines across both environments.
+* **Geospatial Book Search:** Powered by Wikidata SPARQL queries, search for any city globally and instantly discover books set in that exact location
+* **Interactive Map Visualization:** Explore your literary hits on an interactive Leaflet map, complete with dynamic pins and coordinates
+* **Rich Metadata & Lazy Loading:** Integration with the Google Books API provides covers, summaries, and aggregated ratings. Metadata is lazily loaded to protect user bandwidth and prevent API rate-limiting
+* **Trip Organization (In Progress):** Save books to a global master library and curate them into specific, folder-based itineraries (e.g., "London 2026", "Summer Beach Reads")
 
-**Phase 2: Map Visualization & "My Trips" (Up Next)**
-* **Map Visualization:** Integrate React-Leaflet to consume geographic coordinates and plot interactive pins for each book's location, centering the map dynamically on the searched city.
-* **Data Persistence:** Initialize a PostgreSQL database to power the "Saved Trips" and "My Map" features, allowing users to curate and persist reading lists for upcoming vacations.
-* **Infrastructure & Deployment:** Dockerize the frontend and backend, provision AWS resources (RDS, EC2/App Runner), and finalize CI/CD pipelines.
-* **Tech Debt & Housekeeping:** Standardize React component architecture and ensure codebase health before scaling to additional regions or complex UI features.
+## Architecture & Tech Stack
+```mermaid
+graph TD
+    subgraph Client [Frontend: React & TypeScript]
+        UI[Mantine UI Components]
+        Map[React-Leaflet Map]
+        Cache[SWR Data Caching]
+    end
 
-## Tech Stack
-* TypeScript
-* React + Mantine (UI Library)
-* Node.js + Express
-* React-Leaflet (Map Visualization)
-* Postgres + Sequelize (or alternative ORM)
-* AWS - *tbd* still debating if I want to use RDS, API Gateway, etc.
-* Terraform
-* Vitest, Cypress, react-testing-library
-* GitHub Actions
+    subgraph Server [Backend: Node.js & Express]
+        Router[Express API Routes]
+        ORM[Sequelize ORM]
+    end
+
+    subgraph DB [Database]
+        Neon[(Neon PostgreSQL)]
+    end
+
+    subgraph External [External APIs]
+        Wikidata[Wikidata SPARQL Endpoint]
+        GoogleBooks[Google Books API]
+    end
+
+    %% Frontend Internal
+    UI --- Map
+    UI <-->|State/Props| Cache
+
+    %% Client to Server
+    Cache <-->|HTTP GET/POST| Router
+
+    %% Server to DB
+    Router <-->|Queries| ORM
+    ORM <-->|Read/Write| Neon
+
+    %% Server to External
+    Router <-->|Location & Q-IDs| Wikidata
+    Router <-->|Rich Metadata| GoogleBooks
+```
+
+* **Frontend:** React, TypeScript, Mantine UI, SWR (Data Fetching & Caching), React-Leaflet
+* **Backend:** Node.js, Express
+* **Database:** PostgreSQL (Hosted via Neon), Sequelize ORM
+* **External APIs:** Wikidata (Geospatial/Book data), Google Books API (Enriched Metadata)
+* **Testing:** Vitest, React Testing Library
+
+## Roadmap
+
+**Phase 1 & 2: Core Search & Map Visualization (Completed)**
+* Full-stack foundation with Node.js/Express and React
+* Complex SPARQL integration for global book discovery
+* Interactive Leaflet map and responsive Mantine UI grid
+* Postgres database initialization for "Saved Books" persistence
+
+**Phase 3: Trip Organization (Current)**
+* Implementing a Many-to-Many relational database architecture to allow users to group saved books into custom folders and itineraries
+
+**Phase 4: Authentication & Deployment (Upcoming)**
+* Implement robust user authentication and authorization
+* Deploy a password-protected live demo environment
+* Provision infrastructure via a cloud provider (Provider TBD)
+
+**Phase 5: Data Retrieval Improvements**
+* TBD, will need to figure out way to improve the latency issues with Wikidata
+
+## Local Development
+To run this project locally, you will need Node.js and a local Postgres instance (or a Neon connection string).
+
+1. Clone the repository
+2. Run `npm install` in both the frontend and backend directories
+3. Duplicate `.env.example` to `.env` and add your database credentials and Google Books API key
+4. Run `npm run dev` to start the development servers
