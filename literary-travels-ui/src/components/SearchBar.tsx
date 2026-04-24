@@ -56,7 +56,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSubmit, isLoading }) => 
         fetchPlaces();
     }, [debouncedSearch]);
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault(); 
         
         const selectedPlace = places.find(p => p.wikidataId === selectedValue);
